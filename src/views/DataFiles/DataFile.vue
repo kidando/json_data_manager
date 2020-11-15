@@ -105,7 +105,7 @@ export default {
 
   }),
   mounted() {
-    this.getDataFile(this.$route.params.id);
+    this.dbGetDataFile(this.$route.params.id);
   },
   computed: {
     name() {
@@ -158,21 +158,19 @@ export default {
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
     },
-    getDataFile(id) {
+    dbGetDataFile(id) {
       this.data_file = null;
       ipcRenderer.send("db_datafiles_get_where_id", id);
       ipcRenderer.once("db_datafiles_get_where_id_response", (event, data) => {
        
-        const d = JSON.stringify(data);
-        const p = JSON.parse(d);
-  
-         this.data_file =  p;
+       // A fix for VUEjs coz it receiveds data as a reactive observable instead of data object
+           this.data_file =  JSON.parse(JSON.stringify(data));
 
-        this.getFileContents(data.jdm_data.file_path);
+        this.fsGetFileContents(data.jdm_data.file_path);
       });
     },
 
-    getFileContents(path) {
+    fsGetFileContents(path) {
       this.data_file_contents = {};
       this.column_definitions = [];
       this.items = [];
