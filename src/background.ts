@@ -1,9 +1,134 @@
 'use strict'
 
-import { app, protocol, BrowserWindow } from 'electron'
+import { app, protocol, BrowserWindow, ipcMain, dialog } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer'
+require('@electron/remote/main').initialize()
+const dayjs = require('dayjs')
+
 const isDevelopment = process.env.NODE_ENV !== 'production'
+const fs = require('fs');
+const path = require('path')
+const Datastore = require('nedb-promises')
+const dbPath = path.resolve(__dirname, './data_file.db')
+let data_file_model = Datastore.create('./src/models/data_files.db')
+
+
+
+
+
+
+// DATA FILE LOADING
+// Get single data file
+ipcMain.on('db_datafiles_get_where_id', (event, id) => {
+  data_file_model.findOne({ '_id': id }).then((response: any) => {
+    if (win !== null) {
+      win.webContents.send('db_datafiles_get_where_id_response', JSON.stringify(response));
+    }
+  }).catch((error: any) => {
+    console.log(error);
+  });
+});
+
+// Get all data files
+ipcMain.on('db_datafiles_get_all', (event) => {
+  data_file_model.find().then((response: any) => {
+    if (win !== null) {
+      win.webContents.send('db_datafiles_get_all_response', response);
+    }
+  }).catch((error: any) => {
+    console.log(error);
+  });
+});
+
+
+
+
+// DATA FILE SAVE LOAD
+// Update data file
+ipcMain.on('update_save_file', (event, data_file_structure) => {
+
+  fs.writeFile(data_file_structure.jdm_data.file_path, JSON.stringify(data_file_structure), function (err: any) {
+    if (err) throw err;
+    data_file_model.update(data_file_structure)
+      .then((response: any) => {
+
+        if (win !== null) {
+          win.webContents.send('update_save_file_response', response);
+        }
+      }).catch((err: any) => {
+        console.log(err);
+      });
+
+
+  });
+});
+
+// Save data file
+ipcMain.on('save_file_dialog', (event, fileinfo) => {
+
+  dialog.showSaveDialog({
+    title: "Select Save Location",
+    defaultPath: fileinfo.proposed_filename,
+    filters: [
+      { name: 'JSON', extensions: ['json'] }
+    ]
+  }).then(response => {
+    if (response.canceled) {
+      if (win !== null) {
+        win.webContents.send('save_file_dialog_response', 'cancelled');
+      }
+    } else {
+      let now = dayjs();
+      let result = {
+        jdm_data: {
+          name: fileinfo.name,
+          file_path: response.filePath,
+          created_at: now.format('YYYY-MM-DD HH:mm:ss'),
+          updated_at: now.format('YYYY-MM-DD HH:mm:ss'),
+          deleted_at: ""
+        },
+        items_data: {
+          column_definitions: [],
+          items: []
+        }
+
+      };
+      fs.writeFile(response.filePath, JSON.stringify(result), function (err: any) {
+        if (err) throw err;
+        data_file_model.insert(result)
+          .then((response: any) => {
+
+            if (win !== null) {
+              win.webContents.send('save_file_dialog_response', response);
+            }
+          }).catch((err: any) => {
+            console.log(err);
+          });
+
+
+      });
+
+    }
+  });
+
+
+});
+
+
+// Load data file
+ipcMain.on('load_data_file_where_path', (event, filepath) => {
+  fs.readFile(filepath, 'utf8', (err: any, fileContets: any) => {
+    if (err) {
+      console.error(err)
+      return
+    }
+    if (win !== null) {
+      win.webContents.send('load_data_file_where_path_response', fileContets);
+    }
+  })
+});
+
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
@@ -17,15 +142,28 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 800,
-    height: 600,
+    width: 960,
+    height: 540,
+    minWidth: 600,
+    minHeight: 300,
+    title: "JSON Data Manager",
     webPreferences: {
       // Use pluginOptions.nodeIntegration, leave this alone
       // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
       nodeIntegration: (process.env
-          .ELECTRON_NODE_INTEGRATION as unknown) as boolean
+        .ELECTRON_NODE_INTEGRATION as unknown) as boolean,
+      enableRemoteModule: true
     }
   })
+
+  win.webContents.on('did-finish-load', function () {
+    if (win !== null) {
+      win.setTitle("JSON Data Manager");
+
+
+
+    }
+  });
 
   if (process.env.WEBPACK_DEV_SERVER_URL) {
     // Load the url of the dev server if in development mode
@@ -41,6 +179,7 @@ function createWindow() {
     win = null
   })
 }
+
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {

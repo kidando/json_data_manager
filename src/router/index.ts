@@ -1,22 +1,32 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
-import Home from '../views/Home.vue'
+
+// PROJECTS
+import Projects from '../views/Projects.vue'
+
+// DATA FILES
+import DataFileAdd from '../views/DataFiles/DataFileAdd.vue'
+import DataFiles from '../views/DataFiles/DataFiles.vue'
+import DataFile from '../views/DataFiles/DataFile.vue'
+
+
+// SETTINGS
+//import SettingsLandingPage from '../views/Settings/SettingsLandingPage.vue'
 
 Vue.use(VueRouter)
 
 const routes: Array<RouteConfig> = [
+
+  // DATAFILES
   {
     path: '/',
-    name: 'Home',
-    component: Home
+    name: 'DataFiles',
+    component: DataFiles
   },
   {
-    path: '/about',
-    name: 'About',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/About.vue')
+    path: '/data_file/:id',
+    name: 'DataFile',
+    component: DataFile
   }
 ]
 
