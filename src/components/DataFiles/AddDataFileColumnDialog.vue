@@ -99,7 +99,7 @@
                   ></v-text-field>
                   <v-select
                     v-model="dictionary_var_type"
-                    @change="onChangeDictionaryDataType"
+          
                     :items="dicationary_data_types"
                     :disabled="column_check_null"
                     filled
