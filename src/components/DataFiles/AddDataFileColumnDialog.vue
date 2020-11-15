@@ -314,6 +314,7 @@ export default {
             data_type: this.data_type,
             default_value: this.boolean_default_value,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
           break;
 
@@ -323,6 +324,7 @@ export default {
             data_type: this.data_type,
             default_value: this.dictionary_var_list,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
 
           break;
@@ -333,6 +335,7 @@ export default {
             data_type: this.data_type,
             default_value: this.number_default_value,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
 
           break;
@@ -346,6 +349,7 @@ export default {
             data_type: this.data_type,
             default_value: this.string_default_value,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
           break;
 
@@ -357,6 +361,7 @@ export default {
               this.vector2_x == "" ? this.vector2_x : 0
             },${this.vector2_y == "" ? this.vector2_y : 0})`,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
 
           break;
@@ -371,6 +376,7 @@ export default {
               this.vector3_z == "" ? this.vector3_z : 0
             })`,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
           break;
 
@@ -380,6 +386,7 @@ export default {
             data_type: this.data_type,
             default_value: this.string_default_value,
             is_null_default_instead: this.column_check_null,
+            required: this.column_check_required
           };
           break;
       }

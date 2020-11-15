@@ -139,7 +139,7 @@ export default {
         },
         items_data:{
           column_definitions:JSON.stringify(this.column_definitions),
-          items:this.items
+          items:JSON.stringify(this.items)
         }
       };
 
@@ -162,7 +162,11 @@ export default {
       this.data_file = null;
       ipcRenderer.send("db_datafiles_get_where_id", id);
       ipcRenderer.once("db_datafiles_get_where_id_response", (event, data) => {
-        this.data_file = JSON.parse(data);
+       
+        const d = JSON.stringify(data);
+        const p = JSON.parse(d);
+  
+         this.data_file =  p;
 
         this.getFileContents(data.jdm_data.file_path);
       });
@@ -174,11 +178,14 @@ export default {
       this.items = [];
       ipcRenderer.send("load_data_file_where_path", path);
       ipcRenderer.once("load_data_file_where_path_response", (event, data) => {
+
+        
         const file = JSON.parse(data);
+        console.log(file);
   
 
-        this.column_definitions = file.items_data.column_definitions;
-        this.items = file.items_data.items;
+        this.column_definitions = JSON.parse(file.items_data.column_definitions);
+        this.items = JSON.parse(file.items_data.items);
       });
     },
   },
