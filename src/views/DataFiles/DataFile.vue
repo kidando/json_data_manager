@@ -1,11 +1,12 @@
 <template>
   <v-container fluid>
-    <div class="d-flex justify-space-between align-center mb-3">
+    <div class="d-flex justify-space-between align-center mb-2">
       <div>
         <h2>{{ name }}</h2>
+        <h5 class="font-weight-regular text--lighten-4">{{file_path}}</h5>
       </div>
       <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
-        ><i class="fas fa-save mr-2"></i> Save</v-btn
+        ><i class="fas fa-save mr-2 "></i> Save</v-btn
       >
     </div>
     <hr />
@@ -15,13 +16,13 @@
           <v-btn
             class="mr-3"
             @click="onPressedShowDialogAddColumn"
-            outlined
+            elevation="0"
             color="primary"
             ><i class="fas fa-columns mr-2"></i>Add Column</v-btn
           >
           <v-btn
             v-if="column_definitions.length > 0"
-            outlined
+            elevation="0"
             color="primary"
             class="ml-3"
             ><i class="fas fa-plus mr-2"></i> Insert Record</v-btn
@@ -48,7 +49,7 @@
           <tbody v-else>
             <tr>
               <td :colspan="column_definitions.length + 1" class="text-center">
-                No Items set
+                No records
               </td>
             </tr>
           </tbody>
@@ -100,6 +101,13 @@ export default {
     name() {
       if (this.db_data_file != null) {
         return this.db_data_file.name;
+      }
+
+      return "Loading...";
+    },
+    file_path() {
+      if (this.db_data_file != null) {
+        return this.db_data_file.file_path;
       }
 
       return "Loading...";
@@ -183,7 +191,9 @@ hr {
   thead {
     tr {
       th {
-        background-color: #f2f2f2;
+        background-color: #585858;
+        color: #fff;
+        font-weight: normal;
         border: 1px solid #ccc;
         padding: 3px 10px;
       }
@@ -195,6 +205,7 @@ hr {
       td {
         border: 1px solid #ccc;
         padding: 3px 10px;
+        background-color: #fff;
       }
     }
   }
