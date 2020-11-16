@@ -23,7 +23,7 @@ let data_file_model = Datastore.create('./src/models/data_files.db')
 ipcMain.on('db_datafiles_get_where_id', (event, id) => {
   data_file_model.findOne({ '_id': id }).then((response: any) => {
     if (win !== null) {
-      win.webContents.send('db_datafiles_get_where_id_response', JSON.stringify(response));
+      win.webContents.send('db_datafiles_get_where_id_response', response);
     }
   }).catch((error: any) => {
     console.log(error);
@@ -47,11 +47,9 @@ ipcMain.on('db_datafiles_get_all', (event) => {
 // DATA FILE SAVE LOAD
 // Update data file
 ipcMain.on('update_save_file', (event, data_file_structure) => {
-
   fs.writeFile(data_file_structure.jdm_data.file_path, JSON.stringify(data_file_structure), function (err: any) {
     if (err) throw err;
-    data_file_model.update(data_file_structure)
-      .then((response: any) => {
+    data_file_model.update({_id:data_file_structure._id},data_file_structure).then((response: any) => {
 
         if (win !== null) {
           win.webContents.send('update_save_file_response', response);

@@ -1,13 +1,12 @@
 <template>
   <v-container fluid>
-    <div class="d-flex justify-space-between align-center">
+    <div class="d-flex justify-space-between align-center mb-3">
       <div>
         <h2>{{ name }}</h2>
-        <h5 class="text-uppercase gray-color font-weight-regular mb-2">
-          {{ last_updated }}
-        </h5>
       </div>
-      <v-btn @click="onPressedDataFileSave" elevation="0" color="success"><i class="fas fa-save mr-2"></i> Save</v-btn>
+      <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
+        ><i class="fas fa-save mr-2"></i> Save</v-btn
+      >
     </div>
     <hr />
     <v-row>
@@ -62,16 +61,8 @@
     >
     </AddDataFileColumnDialog>
 
-
-    <v-dialog
-      v-model="showSaveDialog"
-      persistent
-      width="300"
-    >
-      <v-card
-        color="primary"
-        dark
-      >
+    <v-dialog v-model="showSaveDialog" persistent width="300">
+      <v-card color="primary" dark>
         <v-card-text>
           Saving file
           <v-progress-linear
@@ -87,7 +78,7 @@
 
 <script>
 import AddDataFileColumnDialog from "../../components/DataFiles/AddDataFileColumnDialog";
-const dayjs = require('dayjs')
+const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
 export default {
   name: "DataFile",
@@ -102,10 +93,9 @@ export default {
     column_definitions: [],
     items: [],
     showSaveDialog: false,
-
   }),
   mounted() {
-    this.getDataFile(this.$route.params.id);
+    this.dbGetDataFile(this.$route.params.id);
   },
   computed: {
     name() {
@@ -124,24 +114,26 @@ export default {
     },
   },
   methods: {
-    onPressedDataFileSave(){
+    onPressedDataFileSave() {
       const now = dayjs();
       this.showSaveDialog = true;
-  
+
       const data_file_structure = {
-        _id:this.data_file._id,
+        _id: this.data_file._id,
         jdm_data: {
           name: this.data_file.jdm_data.name,
           file_path: this.data_file.jdm_data.file_path,
           created_at: this.data_file.jdm_data.created_at,
-          updated_at: now.format('YYYY-MM-DD HH:mm:ss'),
-          deleted_at: this.data_file.jdm_data.deleted_at
+          updated_at: now.format("YYYY-MM-DD HH:mm:ss"),
+          deleted_at: this.data_file.jdm_data.deleted_at,
         },
-        items_data:{
-          column_definitions:JSON.stringify(this.column_definitions),
-          items:this.items
-        }
+        items_data: {
+          column_definitions: JSON.stringify(this.column_definitions),
+          items: JSON.stringify(this.items),
+        },
       };
+
+      console.log(now.format("YYYY-MM-DD HH:mm:ss"))
 
       ipcRenderer.send("update_save_file", data_file_structure);
       ipcRenderer.once("update_save_file_response", (event, data) => {
@@ -149,7 +141,7 @@ export default {
       });
     },
     onDialogClosed(column_definition) {
-      if ('data_type' in column_definition) {
+      if ("data_type" in column_definition) {
         this.column_definitions.push(column_definition);
       }
       this.showAddColumnDialog = false;
@@ -158,27 +150,32 @@ export default {
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
     },
-    getDataFile(id) {
+    dbGetDataFile(id) {
       this.data_file = null;
       ipcRenderer.send("db_datafiles_get_where_id", id);
       ipcRenderer.once("db_datafiles_get_where_id_response", (event, data) => {
-        this.data_file = JSON.parse(data);
+        // A fix for VUEjs coz it receiveds data as a reactive observable instead of data object
+        this.data_file = JSON.parse(JSON.stringify(data));
 
-        this.getFileContents(data.jdm_data.file_path);
+        this.fsGetFileContents(data.jdm_data.file_path);
       });
     },
 
-    getFileContents(path) {
+    fsGetFileContents(path) {
       this.data_file_contents = {};
       this.column_definitions = [];
       this.items = [];
       ipcRenderer.send("load_data_file_where_path", path);
       ipcRenderer.once("load_data_file_where_path_response", (event, data) => {
         const file = JSON.parse(data);
-  
 
-        this.column_definitions = file.items_data.column_definitions;
-        this.items = file.items_data.items;
+        this.column_definitions = JSON.parse(
+          file.items_data.column_definitions
+        );
+
+        if (JSON.stringify(file.items_data.items) !== "[]") {
+          this.items = JSON.parse(file.items_data.items);
+        }
       });
     },
   },
