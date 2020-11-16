@@ -5,7 +5,8 @@ Vue.use(Vuex)
 
 export default new Vuex.Store({
   state: {
-    current_page: "/"
+    current_page: "/",
+    title:"Current Title"
   },
   mutations: { // Sy
     setCurrentPage(state,payload){

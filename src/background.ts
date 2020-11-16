@@ -171,6 +171,10 @@ function createWindow() {
     }
   })
 
+
+
+
+
   win.webContents.on('did-finish-load', function () {
     if (win !== null) {
       win.setTitle("JSON Data Manager");

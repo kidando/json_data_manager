@@ -3,10 +3,9 @@
     <v-row>
       <v-col>
         <v-layout child-flex>
-          <v-card>
+          <v-card flat outlined :rounded="rounded">
             <v-card-title>
-              <v-toolbar-title>Data Files</v-toolbar-title>
-              <v-spacer></v-spacer>
+             
               <v-text-field
                 v-model="search"
                 append-icon="mdi-magnify"
@@ -16,6 +15,7 @@
               ></v-text-field>
             </v-card-title>
             <v-data-table
+              class="flatten_table"
               @dblclick:row="onDoubleClickRow"
               :loading="is_loading_data_files"
               :loading-text="loading_text"
@@ -23,6 +23,22 @@
               :items="db_data_files"
               :search="search"
             >
+              <template v-slot:item="{ item }">
+                <tr>
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.created_at }}</td>
+                  <td>{{ item.updated_at }}</td>
+                  <td class="truncate">
+                    <v-tooltip top>
+                      <template v-slot:activator="{ on, attrs }">
+                        <span v-bind="attrs" v-on="on">{{ item.file_path }}</span>
+                      </template>
+                      <span>{{ item.file_path }}</span>
+                    </v-tooltip>
+                    
+                  </td>
+                </tr>
+              </template>
             </v-data-table>
           </v-card>
         </v-layout>
@@ -36,6 +52,7 @@ const { ipcRenderer } = require("electron");
 export default {
   name: "DataFiles",
   data: () => ({
+    rounded: false,
     search: "",
     headers: [
       {
@@ -77,16 +94,21 @@ export default {
 </script>
 
 <style lang="scss">
-.v-data-table__wrapper{
-   table{
-        thead{
-            tr{
-                th{
-                    min-width: 200px;
-                }
-            }
-
+.truncate {
+  max-width: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v-data-table__wrapper {
+  table {
+    thead {
+      tr {
+        th {
+          min-width: 200px;
+        }
+      }
     }
-   }
+  }
 }
 </style>
