@@ -157,8 +157,8 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 960,
-    height: 540,
+    width: 1280,
+    height: 720,
     minWidth: 600,
     minHeight: 300,
     title: "JSON Data Manager",
