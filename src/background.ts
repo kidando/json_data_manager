@@ -49,8 +49,7 @@ ipcMain.on('db_datafiles_get_all', (event) => {
 ipcMain.on('update_save_file', (event, data_file_structure) => {
   fs.writeFile(data_file_structure.jdm_data.file_path, JSON.stringify(data_file_structure), function (err: any) {
     if (err) throw err;
-    data_file_model.update(data_file_structure)
-      .then((response: any) => {
+    data_file_model.update({_id:data_file_structure._id},data_file_structure).then((response: any) => {
 
         if (win !== null) {
           win.webContents.send('update_save_file_response', response);
