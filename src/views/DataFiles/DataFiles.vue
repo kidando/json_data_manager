@@ -20,7 +20,7 @@
               :loading="is_loading_data_files"
               :loading-text="loading_text"
               :headers="headers"
-              :items="data_files"
+              :items="db_data_files"
               :search="search"
             >
             </v-data-table>
@@ -41,13 +41,13 @@ export default {
       {
         text: "Name",
         align: "start",
-        value: "jdm_data.name",
+        value: "name",
       },
-      { text: "Created", value: "jdm_data.created_at" },
-      { text: "Last Modified", value: "jdm_data.updated_at" },
-      { text: "Location", value: "jdm_data.file_path" },
+      { text: "Created", value: "created_at" },
+      { text: "Last Modified", value: "updated_at" },
+      { text: "Location", value: "file_path" },
     ],
-    data_files: [],
+    db_data_files: [],
     is_loading_data_files: true,
     loading_text: "Retrieving files...",
   }),
@@ -59,12 +59,12 @@ export default {
       this.$router.push(`/data_file/${data.item._id}`);
     },
     getDataFiles() {
-      this.data_files = [];
+      this.db_data_files = [];
       this.is_loading_data_files = true;
       this.loading_text = "Retrieving files...";
       ipcRenderer.send("db_datafiles_get_all");
       ipcRenderer.once("db_datafiles_get_all_response", (event, data) => {
-        this.data_files = data;
+        this.db_data_files = data;
         this.is_loading_data_files = false;
 
         if (data.length <= 0) {

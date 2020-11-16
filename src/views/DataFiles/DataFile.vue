@@ -88,8 +88,7 @@ export default {
 
   data: () => ({
     showAddColumnDialog: false,
-    data_file: null,
-    data_file_contents: {},
+    db_data_file: null,
     column_definitions: [],
     items: [],
     showSaveDialog: false,
@@ -99,33 +98,26 @@ export default {
   },
   computed: {
     name() {
-      if (this.data_file != null) {
-        return this.data_file.jdm_data.name;
+      if (this.db_data_file != null) {
+        return this.db_data_file.name;
       }
 
       return "Loading...";
-    },
-    last_updated() {
-      if (this.data_file != null) {
-        return "Last Updated: " + this.data_file.jdm_data.updated_at;
-      }
-
-      return "Loading...";
-    },
+    }
   },
   methods: {
     onPressedDataFileSave() {
       const now = dayjs();
       this.showSaveDialog = true;
 
-      const data_file_structure = {
-        _id: this.data_file._id,
+      const data_file = {
+        _id: this.db_data_file._id,
         jdm_data: {
-          name: this.data_file.jdm_data.name,
-          file_path: this.data_file.jdm_data.file_path,
-          created_at: this.data_file.jdm_data.created_at,
+          name: this.db_data_file.name,
+          file_path: this.db_data_file.file_path,
+          created_at: this.db_data_file.created_at,
           updated_at: now.format("YYYY-MM-DD HH:mm:ss"),
-          deleted_at: this.data_file.jdm_data.deleted_at,
+          deleted_at: this.db_data_file.deleted_at,
         },
         items_data: {
           column_definitions: JSON.stringify(this.column_definitions),
@@ -133,9 +125,7 @@ export default {
         },
       };
 
-      console.log(now.format("YYYY-MM-DD HH:mm:ss"))
-
-      ipcRenderer.send("update_save_file", data_file_structure);
+      ipcRenderer.send("update_save_file", data_file);
       ipcRenderer.once("update_save_file_response", (event, data) => {
         this.showSaveDialog = false;
       });
@@ -151,18 +141,17 @@ export default {
       this.showAddColumnDialog = true;
     },
     dbGetDataFile(id) {
-      this.data_file = null;
+      this.db_data_file = null;
       ipcRenderer.send("db_datafiles_get_where_id", id);
       ipcRenderer.once("db_datafiles_get_where_id_response", (event, data) => {
         // A fix for VUEjs coz it receiveds data as a reactive observable instead of data object
-        this.data_file = JSON.parse(JSON.stringify(data));
+        this.db_data_file = JSON.parse(JSON.stringify(data));
 
-        this.fsGetFileContents(data.jdm_data.file_path);
+        this.fsGetFileContents(data.file_path);
       });
     },
 
     fsGetFileContents(path) {
-      this.data_file_contents = {};
       this.column_definitions = [];
       this.items = [];
       ipcRenderer.send("load_data_file_where_path", path);

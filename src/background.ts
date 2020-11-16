@@ -46,10 +46,20 @@ ipcMain.on('db_datafiles_get_all', (event) => {
 
 // DATA FILE SAVE LOAD
 // Update data file
-ipcMain.on('update_save_file', (event, data_file_structure) => {
-  fs.writeFile(data_file_structure.jdm_data.file_path, JSON.stringify(data_file_structure), function (err: any) {
+ipcMain.on('update_save_file', (event, data_file) => {
+  fs.writeFile(data_file.jdm_data.file_path, JSON.stringify(data_file), function (err: any) {
     if (err) throw err;
-    data_file_model.update({_id:data_file_structure._id},data_file_structure).then((response: any) => {
+
+    const db_datafile = {
+      _id:data_file._id,
+      name:data_file.jdm_data.name,
+      file_path:data_file.jdm_data.file_path,
+      created_at:data_file.jdm_data.created_at,
+      updated_at:data_file.jdm_data.updated_at,
+      deleted_at:data_file.jdm_data.deleted_at
+    };
+
+    data_file_model.update({_id:data_file._id},db_datafile).then((response: any) => {
 
         if (win !== null) {
           win.webContents.send('update_save_file_response', response);
@@ -94,7 +104,14 @@ ipcMain.on('save_file_dialog', (event, fileinfo) => {
       };
       fs.writeFile(response.filePath, JSON.stringify(result), function (err: any) {
         if (err) throw err;
-        data_file_model.insert(result)
+        const db_datafile = {
+          name:result.jdm_data.name,
+          file_path:result.jdm_data.file_path,
+          created_at:result.jdm_data.created_at,
+          updated_at:result.jdm_data.updated_at,
+          deleted_at:result.jdm_data.deleted_at
+        };
+        data_file_model.insert(db_datafile)
           .then((response: any) => {
 
             if (win !== null) {
