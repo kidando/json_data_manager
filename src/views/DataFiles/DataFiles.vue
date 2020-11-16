@@ -16,7 +16,7 @@
             </v-card-title>
             <v-data-table
               class="flatten_table"
-              @dblclick:row="onDoubleClickRow"
+    
               :loading="is_loading_data_files"
               :loading-text="loading_text"
               :headers="headers"
@@ -24,7 +24,7 @@
               :search="search"
             >
               <template v-slot:item="{ item }">
-                <tr>
+                <tr @dblclick="onDoubleClickRow(item)">
                   <td>{{ item.name }}</td>
                   <td>{{ item.created_at }}</td>
                   <td>{{ item.updated_at }}</td>
@@ -72,8 +72,8 @@ export default {
     this.getDataFiles();
   },
   methods: {
-    onDoubleClickRow(event, data) {
-      this.$router.push(`/data_file/${data.item._id}`);
+    onDoubleClickRow(item) {
+      this.$router.push(`/data_file/${item._id}`);
     },
     getDataFiles() {
       this.db_data_files = [];
