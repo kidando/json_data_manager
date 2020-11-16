@@ -1,11 +1,8 @@
 <template>
   <v-container fluid>
-    <div class="d-flex justify-space-between align-center">
+    <div class="d-flex justify-space-between align-center mb-3">
       <div>
         <h2>{{ name }}</h2>
-        <h5 class="text-uppercase gray-color font-weight-regular mb-2">
-          {{ last_updated }}
-        </h5>
       </div>
       <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
         ><i class="fas fa-save mr-2"></i> Save</v-btn
@@ -135,6 +132,8 @@ export default {
           items: JSON.stringify(this.items),
         },
       };
+
+      console.log(now.format("YYYY-MM-DD HH:mm:ss"))
 
       ipcRenderer.send("update_save_file", data_file_structure);
       ipcRenderer.once("update_save_file_response", (event, data) => {
