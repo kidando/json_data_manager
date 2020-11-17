@@ -3,10 +3,10 @@
     <div class="d-flex justify-space-between align-center mb-2">
       <div>
         <h2>{{ name }}</h2>
-        <h5 class="font-weight-regular text--lighten-4">{{file_path}}</h5>
+        <h5 class="font-weight-regular text--lighten-4">{{ file_path }}</h5>
       </div>
       <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
-        ><i class="fas fa-save mr-2 "></i> Save</v-btn
+        ><i class="fas fa-save mr-2"></i> Save</v-btn
       >
     </div>
     <hr />
@@ -21,6 +21,7 @@
             ><i class="fas fa-columns mr-2"></i>Add Column</v-btn
           >
           <v-btn
+            @click="onPressedShowDialogAddRecord"
             v-if="column_definitions.length > 0"
             elevation="0"
             color="primary"
@@ -57,10 +58,16 @@
       </v-col>
     </v-row>
     <AddDataFileColumnDialog
-      @dialogClosed="onDialogClosed"
-      :showDialog="showAddColumnDialog"
+      @addColumnDialogClosed="onAddColumnDialogClosed"
+      :showAddColumnDialog="showAddColumnDialog"
+    ></AddDataFileColumnDialog>
+
+    <AddDataFileRecordDialog
+      @addRecordDialogClosed="onAddRecordDialogClosed"
+      :showAddRecordDialog="showAddRecordDialog"
+      :column_definitions="column_definitions" v-if="showAddRecordDialog"
     >
-    </AddDataFileColumnDialog>
+    </AddDataFileRecordDialog>
 
     <v-dialog v-model="showSaveDialog" persistent width="300">
       <v-card color="primary" dark>
@@ -79,20 +86,23 @@
 
 <script>
 import AddDataFileColumnDialog from "../../components/DataFiles/AddDataFileColumnDialog";
+import AddDataFileRecordDialog from "../../components/DataFiles/AddDataFileRecordDialog";
 const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
 export default {
   name: "DataFile",
   components: {
     AddDataFileColumnDialog,
+    AddDataFileRecordDialog,
   },
 
   data: () => ({
     showAddColumnDialog: false,
+    showAddRecordDialog: false,
     db_data_file: null,
     column_definitions: [],
     items: [],
-    showSaveDialog: false,
+    showSaveDialog: false
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
@@ -111,7 +121,7 @@ export default {
       }
 
       return "Loading...";
-    }
+    },
   },
   methods: {
     onPressedDataFileSave() {
@@ -138,15 +148,25 @@ export default {
         this.showSaveDialog = false;
       });
     },
-    onDialogClosed(column_definition) {
+    onAddColumnDialogClosed(column_definition) {
       if ("data_type" in column_definition) {
         this.column_definitions.push(column_definition);
       }
       this.showAddColumnDialog = false;
     },
+    onAddRecordDialogClosed(row_data) {
+      if(row_data.length > 0){
+        console.log(row_data);
+      }
+      this.showAddRecordDialog = false;
+    },
 
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
+    },
+    onPressedShowDialogAddRecord() {
+    
+      this.showAddRecordDialog = true;
     },
     dbGetDataFile(id) {
       this.db_data_file = null;

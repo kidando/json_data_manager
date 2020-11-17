@@ -1,6 +1,6 @@
 <template>
   <div id="data-file-add-column-dialog">
-    <v-dialog :value="showDialog" persistent max-width="600px">
+    <v-dialog :value="showAddColumnDialog" persistent max-width="600px">
       <v-card>
         <v-card-title>
           <span class="headline">Add Column</span>
@@ -225,7 +225,7 @@ const array = require("lodash/array");
 export default {
   name: "AddDataFileColumnDialog",
   props: {
-    showDialog: Boolean,
+    showAddColumnDialog: Boolean,
   },
   data: () => ({
     show_alert: false,
@@ -333,7 +333,7 @@ export default {
           column_definition = {
             name: this.name,
             data_type: this.data_type,
-            default_value: this.number_default_value,
+            default_value: Number(this.number_default_value),
             is_null_default_instead: this.column_check_null,
             required: this.column_check_required
           };
@@ -428,7 +428,7 @@ export default {
       this.item_to_add_to_list = "";
     },
     closeModal(column_definition = []) {
-      this.$emit("dialogClosed", column_definition);
+      this.$emit("addColumnDialogClosed", column_definition);
     },
     onChangeDataType(item) {
       switch (item) {
