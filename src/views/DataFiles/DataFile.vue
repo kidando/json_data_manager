@@ -243,6 +243,7 @@ hr {
   .headerClass{
     color:white;
     background-color: rgb(56, 56, 56)!important;
+    text-align: center;
   }
   tr {
     td {
