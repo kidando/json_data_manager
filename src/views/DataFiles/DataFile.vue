@@ -3,10 +3,10 @@
     <div class="d-flex justify-space-between align-center mb-2">
       <div>
         <h2>{{ name }}</h2>
-        <h5 class="font-weight-regular text--lighten-4">{{file_path}}</h5>
+        <h5 class="font-weight-regular text--lighten-4">{{ file_path }}</h5>
       </div>
       <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
-        ><i class="fas fa-save mr-2 "></i> Save</v-btn
+        ><i class="fas fa-save mr-2"></i> Save</v-btn
       >
     </div>
     <hr />
@@ -21,6 +21,7 @@
             ><i class="fas fa-columns mr-2"></i>Add Column</v-btn
           >
           <v-btn
+            @click="onPressedShowDialogAddRecord"
             v-if="column_definitions.length > 0"
             elevation="0"
             color="primary"
@@ -35,32 +36,26 @@
           cellpadding="0"
           class="data-file-table"
         >
-          <thead>
-            <tr>
-              <th style="widht: 1px"></th>
-              <th v-for="(header, index) in column_definitions" :key="index">
-                {{ header.name }}
-              </th>
-            </tr>
-          </thead>
-          <tbody v-if="items.lenth > 0">
-            <tr v-for="(item, index) in items" :key="index"></tr>
-          </tbody>
-          <tbody v-else>
-            <tr>
-              <td :colspan="column_definitions.length + 1" class="text-center">
-                No records
-              </td>
-            </tr>
-          </tbody>
+          <tr v-for="(row, i) in rows" :key="i">
+            <td v-for="(column, j) in row.columns" :key="j" :class="evaluateTdClass(i)">
+              {{ column.value }}
+            </td>
+          </tr>
         </table>
       </v-col>
     </v-row>
     <AddDataFileColumnDialog
-      @dialogClosed="onDialogClosed"
-      :showDialog="showAddColumnDialog"
+      @addColumnDialogClosed="onAddColumnDialogClosed"
+      :showAddColumnDialog="showAddColumnDialog"
+    ></AddDataFileColumnDialog>
+
+    <AddDataFileRecordDialog
+      @addRecordDialogClosed="onAddRecordDialogClosed"
+      :showAddRecordDialog="showAddRecordDialog"
+      :column_definitions="column_definitions"
+      v-if="showAddRecordDialog"
     >
-    </AddDataFileColumnDialog>
+    </AddDataFileRecordDialog>
 
     <v-dialog v-model="showSaveDialog" persistent width="300">
       <v-card color="primary" dark>
@@ -79,20 +74,26 @@
 
 <script>
 import AddDataFileColumnDialog from "../../components/DataFiles/AddDataFileColumnDialog";
+import AddDataFileRecordDialog from "../../components/DataFiles/AddDataFileRecordDialog";
+import { v4 as uuidv4 } from "uuid";
 const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
 export default {
   name: "DataFile",
   components: {
     AddDataFileColumnDialog,
+    AddDataFileRecordDialog,
   },
 
   data: () => ({
     showAddColumnDialog: false,
+    showAddRecordDialog: false,
     db_data_file: null,
     column_definitions: [],
     items: [],
     showSaveDialog: false,
+    display_rows: [],
+    rows: [],
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
@@ -111,9 +112,13 @@ export default {
       }
 
       return "Loading...";
-    }
+    },
   },
   methods: {
+    evaluateTdClass(row_index){
+      if (row_index == 0) return 'headerClass';
+      return '';
+    },
     onPressedDataFileSave() {
       const now = dayjs();
       this.showSaveDialog = true;
@@ -138,15 +143,48 @@ export default {
         this.showSaveDialog = false;
       });
     },
-    onDialogClosed(column_definition) {
+    onAddColumnDialogClosed(column_definition) {
       if ("data_type" in column_definition) {
         this.column_definitions.push(column_definition);
+
+        if(this.rows.length>0){
+          for(let i=0; i<this.rows.length;i++){
+            this.rows[i].columns.push({
+              name: column_definition.name,
+              value: i==0 ? column_definition.name : ""
+            });
+          }
+        }
       }
       this.showAddColumnDialog = false;
+    },
+    onAddRecordDialogClosed(row_data) {
+      if (row_data.length > 0) {
+
+
+        const columns = [];
+
+        for(let i=0; i<row_data.length;i++){
+
+          columns.push({
+            name:row_data[i].column,
+            value:row_data[i].value
+          });
+        }
+
+        this.rows.push({
+          _id:uuidv4(),
+          columns:columns
+        });
+      }
+      this.showAddRecordDialog = false;
     },
 
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
+    },
+    onPressedShowDialogAddRecord() {
+      this.showAddRecordDialog = true;
     },
     dbGetDataFile(id) {
       this.db_data_file = null;
@@ -169,6 +207,20 @@ export default {
         this.column_definitions = JSON.parse(
           file.items_data.column_definitions
         );
+        if (this.column_definitions.length > 0) {
+          const columns = [];
+          for (let i = 0; i < this.column_definitions.length; i++) {
+            const column_def = this.column_definitions[i];
+            columns.push({
+              name: column_def.name,
+              value: column_def.name,
+            });
+          }
+          this.rows.push({
+            _id: "headers",
+            columns: columns,
+          });
+        }
 
         if (JSON.stringify(file.items_data.items) !== "[]") {
           this.items = JSON.parse(file.items_data.items);
@@ -188,25 +240,16 @@ hr {
   border-bottom: 1px solid #ccc;
 }
 .data-file-table {
-  thead {
-    tr {
-      th {
-        background-color: #585858;
-        color: #fff;
-        font-weight: normal;
-        border: 1px solid #ccc;
-        padding: 3px 10px;
-      }
-    }
+  .headerClass{
+    color:white;
+    background-color: rgb(56, 56, 56)!important;
+    text-align: center;
   }
-
-  tbody {
-    tr {
-      td {
-        border: 1px solid #ccc;
-        padding: 3px 10px;
-        background-color: #fff;
-      }
+  tr {
+    td {
+      border: 1px solid #ccc;
+      padding: 3px 10px;
+      background-color: #fff;
     }
   }
 }
