@@ -45,7 +45,9 @@
             </tr>
           </thead>
           <tbody v-if="items.lenth > 0">
-            <tr v-for="(item, index) in items" :key="index"></tr>
+            <tr v-for="(header, index) in headers" :key="index">
+              <td>{{row.value}}</td>
+            </tr>
           </tbody>
           <tbody v-else>
             <tr>
@@ -65,7 +67,8 @@
     <AddDataFileRecordDialog
       @addRecordDialogClosed="onAddRecordDialogClosed"
       :showAddRecordDialog="showAddRecordDialog"
-      :column_definitions="column_definitions" v-if="showAddRecordDialog"
+      :column_definitions="column_definitions"
+      v-if="showAddRecordDialog"
     >
     </AddDataFileRecordDialog>
 
@@ -102,7 +105,7 @@ export default {
     db_data_file: null,
     column_definitions: [],
     items: [],
-    showSaveDialog: false
+    showSaveDialog: false,
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
@@ -155,17 +158,19 @@ export default {
       this.showAddColumnDialog = false;
     },
     onAddRecordDialogClosed(row_data) {
-      if(row_data.length > 0){
-        console.log(row_data);
+      if (row_data.length > 0) {
+        this.addToRow(row_data);
       }
       this.showAddRecordDialog = false;
     },
 
+    addToRow(row_data) {
+  
+    },
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
     },
     onPressedShowDialogAddRecord() {
-    
       this.showAddRecordDialog = true;
     },
     dbGetDataFile(id) {
