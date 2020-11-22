@@ -21,12 +21,18 @@ const routes: Array<RouteConfig> = [
   {
     path: '/',
     name: 'DataFiles',
-    component: DataFiles
+    component: DataFiles,
+    meta:{
+      title:"Data Files"
+    }
   },
   {
     path: '/data_file/:id',
     name: 'DataFile',
-    component: DataFile
+    component: DataFile,
+    meta:{
+      title:"Data File Details"
+    }
   }
 ]
 
