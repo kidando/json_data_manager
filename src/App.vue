@@ -33,7 +33,7 @@
     <v-app-bar dark color="blue" dense flat  app>
       <v-app-bar-nav-icon @click="drawer = !drawer"></v-app-bar-nav-icon>
 
-      <v-toolbar-title>{{title}}</v-toolbar-title>
+      <v-toolbar-title>{{ $route.meta.title }}</v-toolbar-title>
     </v-app-bar>
 <!-- Sizes your content based upon application components -->
   <v-main>

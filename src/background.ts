@@ -98,7 +98,7 @@ ipcMain.on('save_file_dialog', (event, fileinfo) => {
         },
         items_data: {
           column_definitions: [],
-          items: []
+          rows: []
         }
 
       };
