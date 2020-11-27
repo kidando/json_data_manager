@@ -10,7 +10,7 @@
       >
     </div>
     <hr />
-    <v-row >
+    <v-row>
       <v-col>
         <div>
           <v-btn
@@ -29,23 +29,6 @@
             ><i class="fas fa-plus mr-2"></i> Insert Record</v-btn
           >
         </div>
-
-        <table
-          v-if="column_definitions.length > 0 && show_old_table"
-          cellspacing="0"
-          cellpadding="0"
-          class="data-file-table mt-3"
-        >
-          <tr v-for="(row, i) in rows" :key="i">
-            <td
-              v-for="(column, j) in row.columns"
-              :key="j"
-              :class="evaluateTdClass(i)"
-            >
-              {{ column.value }}
-            </td>
-          </tr>
-        </table>
       </v-col>
     </v-row>
 
@@ -65,7 +48,14 @@
             :headers="df_headers"
             :items="df_rows"
             :search="df_search"
-          ></v-data-table>
+          >
+            <template v-slot:item.actions="{ item }">
+              <v-icon small class="mr-2" @click="editRow(item)">
+                mdi-pencil
+              </v-icon>
+              <v-icon small @click="deleteRow(item)"> mdi-delete </v-icon>
+            </template>
+          </v-data-table>
         </v-card>
       </v-col>
     </v-row>
@@ -92,6 +82,24 @@
             class="mb-0"
           ></v-progress-linear>
         </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <v-dialog v-model="showDialogConfirmDeleteRow" persistent max-width="290">
+      <v-card>
+        <v-card-title class="headline"> Confirm Delete </v-card-title>
+        <v-card-text
+          >Are you sure you want to delele this row?</v-card-text
+        >
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn color="red darken-1" text @click="showDialogConfirmDeleteRow = false">
+            Cancel
+          </v-btn>
+          <v-btn color="green darken-1" text @click="onPressedConfirmDeleteRow">
+            Delete
+          </v-btn>
+        </v-card-actions>
       </v-card>
     </v-dialog>
   </v-container>
@@ -121,12 +129,14 @@ export default {
     df_headers: [],
     df_rows: [],
     df_search: "",
-    show_old_table: false
+    delete_item: null,
+    showDialogConfirmDeleteRow: false
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
   },
   computed: {
+    
     name() {
       if (this.db_data_file != null) {
         return this.db_data_file.name;
@@ -143,6 +153,32 @@ export default {
     },
   },
   methods: {
+    editRow(row) {
+      console.log("Edit", row);
+    },
+    onPressedConfirmDeleteRow(){
+      for (let i = 0; i < this.df_rows.length; i++) {
+        if (this.df_rows[i] == this.delete_item) {
+          this.df_rows.splice(i, 1);
+          break;
+        }
+      }
+
+      for(let i=0; i<this.rows.length; i++){
+        if(this.rows[i]._id == this.delete_item._id){
+          this.rows.splice(i,1);
+          break;
+        }
+      }
+
+     
+      this.showDialogConfirmDeleteRow = false;
+    },
+    deleteRow(row) {
+      this.delete_item = row;
+      this.showDialogConfirmDeleteRow= true;
+      
+    },
     evaluateTdClass(row_index) {
       if (row_index == 0) return "headerClass";
       return "";
@@ -241,10 +277,15 @@ export default {
         const header = this.rows[0].columns[i];
 
         this.df_headers.push({
-          value:this.rows[0].columns[i].name,
-          text:this.rows[0].columns[i].name
+          value: this.rows[0].columns[i].name,
+          text: this.rows[0].columns[i].name
         });
       }
+
+      this.df_headers.push({
+        value: "actions",
+        text: "Actions",
+      });
 
       for (let i = 0; i < this.rows.length; i++) {
         if (i != 0) {
@@ -253,16 +294,14 @@ export default {
 
           for (let j = 0; j < row.columns.length; j++) {
             const column = row.columns[j];
-            
-            for (let k=0; k<this.df_headers.length;k++){
-              if(this.df_headers[k].value==column.name){
+
+            for (let k = 0; k < this.df_headers.length; k++) {
+              if (this.df_headers[k].value == column.name) {
                 row_object[column.name] = column.value;
-                
               }
             }
           }
-
-          
+          row_object['_id'] = row._id;
 
           this.df_rows.push(row_object);
         }
