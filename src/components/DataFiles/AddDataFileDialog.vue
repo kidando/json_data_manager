@@ -85,9 +85,7 @@ export default {
   }),
   computed: {},
   methods: {
-    dialogLoaded() {
-      console.log("done");
-    },
+   
     closeModal() {
       this.$emit("dialogClosed");
     },

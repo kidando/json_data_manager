@@ -89,6 +89,7 @@ export default {
   name: "AddDataFileColumnDialog",
   props: {
     showAddColumnDialog: Boolean,
+    data_types: Array
   },
   data: () => ({
     show_alert: false,
@@ -101,11 +102,6 @@ export default {
     number_default_value: 0,
     string_default_value: "",
     boolean_default_values: ["", "True", "False"],
-    data_types: [
-      "Boolean",
-      "Number",
-      "String"
-    ],
     rules: {
       required: (value) => !!value || "Required",
     },

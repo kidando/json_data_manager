@@ -14,18 +14,25 @@
       <v-col>
         <div>
           <v-btn
-            class="mr-3"
+            class="mr-2"
             @click="onPressedShowDialogAddColumn"
             elevation="0"
             color="primary"
             ><i class="fas fa-columns mr-2"></i>Add Column</v-btn
           >
           <v-btn
+            @click="onPressedShowDialogEditColumns"
+            class="ml-1 mr-1"
+            elevation="0"
+            color="primary"
+            ><i class="fas fa-edit mr-2"></i>Edit Columns</v-btn
+          >
+          <v-btn
             @click="onPressedShowDialogAddRecord"
             v-if="column_definitions.length > 0"
             elevation="0"
             color="primary"
-            class="ml-3"
+            class="ml-2"
             ><i class="fas fa-plus mr-2"></i> Insert Record</v-btn
           >
         </div>
@@ -62,6 +69,7 @@
     <AddDataFileColumnDialog
       @addColumnDialogClosed="onAddColumnDialogClosed"
       :showAddColumnDialog="showAddColumnDialog"
+      :data_types="data_types"
     ></AddDataFileColumnDialog>
 
     <DataFileRecordDialog
@@ -73,6 +81,15 @@
       v-if="showRecordDialog"
     >
     </DataFileRecordDialog>
+
+    <EditDataFileColumnsDialog
+      @columnUpdated="onColumnUpdated"
+      :data_types="data_types"
+      :column_definitions="column_definitions"
+      @editColumnsDialogClosed="onEditColumnsDialogClosed"
+      :show="showEditColumnsDialog"
+    >
+    </EditDataFileColumnsDialog>
 
     <v-dialog v-model="showSaveDialog" persistent width="300">
       <v-card color="primary" dark>
@@ -106,12 +123,23 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <v-snackbar v-model="snackbar" timeout="3000" color="green" right top>
+      {{ snackbar_text }}
+
+      <template v-slot:action="{ attrs }">
+        <v-btn color="white" text v-bind="attrs" @click="snackbar = false">
+          Close
+        </v-btn>
+      </template>
+    </v-snackbar>
   </v-container>
 </template>
 
 <script>
 import AddDataFileColumnDialog from "../../components/DataFiles/AddDataFileColumnDialog";
 import DataFileRecordDialog from "../../components/DataFiles/DataFileRecordDialog";
+import EditDataFileColumnsDialog from "../../components/DataFiles/EditDataFileColumnsDialog";
 import { v4 as uuidv4 } from "uuid";
 const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
@@ -120,6 +148,7 @@ export default {
   components: {
     AddDataFileColumnDialog,
     DataFileRecordDialog,
+    EditDataFileColumnsDialog,
   },
 
   data: () => ({
@@ -137,6 +166,10 @@ export default {
     showDialogConfirmDeleteRow: false,
     action: "",
     row_data: null,
+    showEditColumnsDialog: false,
+    data_types: ["Boolean", "Number", "String"],
+    snackbar: false,
+    snackbar_text: "",
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
@@ -158,6 +191,83 @@ export default {
     },
   },
   methods: {
+    onColumnUpdated(column_def) {
+      const _column_definitions = [];
+
+      for (let i = 0; i < this.column_definitions.length; i++) {
+        if (column_def.old_column_name == this.column_definitions[i].name) {
+          _column_definitions.push({
+            name: column_def.name,
+            data_type: column_def.data_type,
+            default_value: column_def.default_value,
+          });
+        } else {
+          _column_definitions.push({
+            name: this.column_definitions[i].name,
+            data_type: this.column_definitions[i].data_type,
+            default_value: this.column_definitions[i].default_value,
+          });
+        }
+      }
+      this.column_definitions = _column_definitions;
+
+      const _rows = [];
+
+      for (let i = 0; i < this.rows.length; i++) {
+        if (i == 0) {
+          const row_columns = this.rows[i].columns;
+          const _columns = [];
+          for (let j = 0; j < row_columns.length; j++) {
+            if (row_columns[j].name == column_def.old_column_name) {
+              _columns.push({
+                name: column_def.name,
+                value: column_def.name,
+              });
+            } else {
+              _columns.push({
+                name: row_columns[j].name,
+                value: row_columns[j].value,
+              });
+            }
+          }
+          _rows.push({
+            _id: this.rows[i]._id,
+            columns: _columns,
+          });
+        } else {
+          const row_column = this.rows[i].columns;
+          const _columns = [];
+
+          for (let i = 0; i < row_column.length; i++) {
+            if (row_column[i].name == column_def.old_column_name) {
+              _columns.push({
+                name: column_def.name,
+                value: row_column[i].value,
+              });
+            } else {
+              _columns.push({
+                name: row_column[i].name,
+                value: row_column[i].value,
+              });
+            }
+          }
+          _rows.push({
+            _id: this.rows[i]._id,
+            columns: _columns,
+          });
+        }
+      }
+      this.rows = _rows;
+      this.updateTableColumnsAndRows();
+      this.snackbar = true;
+      this.snackbar_text = "Column Updated";
+    },
+    onPressedShowDialogEditColumns() {
+      this.showEditColumnsDialog = true;
+    },
+    onEditColumnsDialogClosed() {
+      this.showEditColumnsDialog = false;
+    },
     editRow(row) {
       this.action = "edit";
       this.showRecordDialog = true;
