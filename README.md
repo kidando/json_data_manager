@@ -3,6 +3,12 @@ An Electron desktop app that allows you to perform CRUD operations on tables/col
 
 ![JSON Data Manager](https://media.giphy.com/media/jUaUapq3VNNmc775zz/giphy.gif)
 
+After launching the program:
+- Click on New Data File. It will create a JSON file which you can save on your pc.
+- Once saved, you will see your Data File on the Data Files Screen.
+- Double click on the newly added file.
+- You can now add/edit columns and records to your data file.
+
 ## Why this project even exists?
 I needed a way to better manage item data for a game I was creating. Many games have items, weapons, power-ups etc. that players can collect and use. These items tend to have varying properties.
 
