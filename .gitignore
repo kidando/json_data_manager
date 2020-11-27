@@ -25,5 +25,10 @@ pnpm-debug.log*
 #Electron-builder output
 /dist_electron
 
+<<<<<<< HEAD
 # Other files
 /src/models
+=======
+#Data Models (App Database)
+/src/models
+>>>>>>> dev

@@ -85,9 +85,7 @@ export default {
   }),
   computed: {},
   methods: {
-    dialogLoaded() {
-      console.log("done");
-    },
+   
     closeModal() {
       this.$emit("dialogClosed");
     },
@@ -101,7 +99,6 @@ export default {
       this.processing_modal = true;
       ipcRenderer.once("save_file_dialog_response", (event, data) => {
         //data is the printer list
-        console.log(data);
         this.processing_modal = false;
         this.name = "";
         this.closeModal();

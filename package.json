@@ -23,6 +23,7 @@
     "linvodb3": "^3.26.0",
     "lodash": "^4.17.20",
     "nedb-promises": "^4.1.0",
+    "uuid": "^3.4.0",
     "vue": "^2.6.11",
     "vue-class-component": "^7.2.3",
     "vue-property-decorator": "^8.4.2",

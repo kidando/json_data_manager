@@ -3,10 +3,9 @@
     <v-row>
       <v-col>
         <v-layout child-flex>
-          <v-card>
+          <v-card flat outlined :rounded="rounded">
             <v-card-title>
-              <v-toolbar-title>Data Files</v-toolbar-title>
-              <v-spacer></v-spacer>
+             
               <v-text-field
                 v-model="search"
                 append-icon="mdi-magnify"
@@ -16,13 +15,30 @@
               ></v-text-field>
             </v-card-title>
             <v-data-table
-              @dblclick:row="onDoubleClickRow"
+              class="flatten_table"
+    
               :loading="is_loading_data_files"
               :loading-text="loading_text"
               :headers="headers"
-              :items="data_files"
+              :items="db_data_files"
               :search="search"
             >
+              <template v-slot:item="{ item }">
+                <tr @dblclick="onDoubleClickRow(item)">
+                  <td>{{ item.name }}</td>
+                  <td>{{ item.created_at }}</td>
+                  <td>{{ item.updated_at }}</td>
+                  <td class="truncate">
+                    <v-tooltip top>
+                      <template v-slot:activator="{ on, attrs }">
+                        <span v-bind="attrs" v-on="on">{{ item.file_path }}</span>
+                      </template>
+                      <span>{{ item.file_path }}</span>
+                    </v-tooltip>
+                    
+                  </td>
+                </tr>
+              </template>
             </v-data-table>
           </v-card>
         </v-layout>
@@ -36,18 +52,19 @@ const { ipcRenderer } = require("electron");
 export default {
   name: "DataFiles",
   data: () => ({
+    rounded: false,
     search: "",
     headers: [
       {
         text: "Name",
         align: "start",
-        value: "jdm_data.name",
+        value: "name",
       },
-      { text: "Created", value: "jdm_data.created_at" },
-      { text: "Last Modified", value: "jdm_data.updated_at" },
-      { text: "Location", value: "jdm_data.file_path" },
+      { text: "Created", value: "created_at" },
+      { text: "Last Modified", value: "updated_at" },
+      { text: "Location", value: "file_path" },
     ],
-    data_files: [],
+    db_data_files: [],
     is_loading_data_files: true,
     loading_text: "Retrieving files...",
   }),
@@ -55,16 +72,16 @@ export default {
     this.getDataFiles();
   },
   methods: {
-    onDoubleClickRow(event, data) {
-      this.$router.push(`/data_file/${data.item._id}`);
+    onDoubleClickRow(item) {
+      this.$router.push(`/data_file/${item._id}`);
     },
     getDataFiles() {
-      this.data_files = [];
+      this.db_data_files = [];
       this.is_loading_data_files = true;
       this.loading_text = "Retrieving files...";
       ipcRenderer.send("db_datafiles_get_all");
       ipcRenderer.once("db_datafiles_get_all_response", (event, data) => {
-        this.data_files = data;
+        this.db_data_files = data;
         this.is_loading_data_files = false;
 
         if (data.length <= 0) {
@@ -77,16 +94,21 @@ export default {
 </script>
 
 <style lang="scss">
-.v-data-table__wrapper{
-   table{
-        thead{
-            tr{
-                th{
-                    min-width: 200px;
-                }
-            }
-
+.truncate {
+  max-width: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.v-data-table__wrapper {
+  table {
+    thead {
+      tr {
+        th {
+          min-width: 200px;
+        }
+      }
     }
-   }
+  }
 }
 </style>

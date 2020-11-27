@@ -23,7 +23,7 @@ let data_file_model = Datastore.create('./src/models/data_files.db')
 ipcMain.on('db_datafiles_get_where_id', (event, id) => {
   data_file_model.findOne({ '_id': id }).then((response: any) => {
     if (win !== null) {
-      win.webContents.send('db_datafiles_get_where_id_response', JSON.stringify(response));
+      win.webContents.send('db_datafiles_get_where_id_response', response);
     }
   }).catch((error: any) => {
     console.log(error);
@@ -46,12 +46,20 @@ ipcMain.on('db_datafiles_get_all', (event) => {
 
 // DATA FILE SAVE LOAD
 // Update data file
-ipcMain.on('update_save_file', (event, data_file_structure) => {
-
-  fs.writeFile(data_file_structure.jdm_data.file_path, JSON.stringify(data_file_structure), function (err: any) {
+ipcMain.on('update_save_file', (event, data_file) => {
+  fs.writeFile(data_file.jdm_data.file_path, JSON.stringify(data_file), function (err: any) {
     if (err) throw err;
-    data_file_model.update(data_file_structure)
-      .then((response: any) => {
+
+    const db_datafile = {
+      _id:data_file._id,
+      name:data_file.jdm_data.name,
+      file_path:data_file.jdm_data.file_path,
+      created_at:data_file.jdm_data.created_at,
+      updated_at:data_file.jdm_data.updated_at,
+      deleted_at:data_file.jdm_data.deleted_at
+    };
+
+    data_file_model.update({_id:data_file._id},db_datafile).then((response: any) => {
 
         if (win !== null) {
           win.webContents.send('update_save_file_response', response);
@@ -90,13 +98,20 @@ ipcMain.on('save_file_dialog', (event, fileinfo) => {
         },
         items_data: {
           column_definitions: [],
-          items: []
+          rows: []
         }
 
       };
       fs.writeFile(response.filePath, JSON.stringify(result), function (err: any) {
         if (err) throw err;
-        data_file_model.insert(result)
+        const db_datafile = {
+          name:result.jdm_data.name,
+          file_path:result.jdm_data.file_path,
+          created_at:result.jdm_data.created_at,
+          updated_at:result.jdm_data.updated_at,
+          deleted_at:result.jdm_data.deleted_at
+        };
+        data_file_model.insert(db_datafile)
           .then((response: any) => {
 
             if (win !== null) {
@@ -142,8 +157,8 @@ protocol.registerSchemesAsPrivileged([
 function createWindow() {
   // Create the browser window.
   win = new BrowserWindow({
-    width: 960,
-    height: 540,
+    width: 1280,
+    height: 720,
     minWidth: 600,
     minHeight: 300,
     title: "JSON Data Manager",
@@ -155,6 +170,10 @@ function createWindow() {
       enableRemoteModule: true
     }
   })
+
+
+
+
 
   win.webContents.on('did-finish-load', function () {
     if (win !== null) {
