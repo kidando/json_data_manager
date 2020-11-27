@@ -1,7 +1,7 @@
 # JSON Data Manager
 An Electron desktop app that allows you to perform CRUD operations on tables/collections that are stored as json files. The JSON Data Manager is a tool that treats your JSON data files as though they were database tables (similar to what you would have in MySQl or MongoDB). 
 
-***-INSERT GIF HERE-***
+![JSON Data Manager](https://media.giphy.com/media/jUaUapq3VNNmc775zz/giphy.gif)
 
 ## Why this project even exists?
 I needed a way to better manage item data for a game I was creating. Many games have items, weapons, power-ups etc. that players can collect and use. These items tend to have varying properties.
