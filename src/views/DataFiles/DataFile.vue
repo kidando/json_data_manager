@@ -64,13 +64,15 @@
       :showAddColumnDialog="showAddColumnDialog"
     ></AddDataFileColumnDialog>
 
-    <AddDataFileRecordDialog
-      @addRecordDialogClosed="onAddRecordDialogClosed"
-      :showAddRecordDialog="showAddRecordDialog"
+    <DataFileRecordDialog
+      @addRecordDialogClosed="onRecordDialogClosed"
+      :showRecordDialog="showRecordDialog"
       :column_definitions="column_definitions"
-      v-if="showAddRecordDialog"
+      :action="action"
+      :row_data="row_data"
+      v-if="showRecordDialog"
     >
-    </AddDataFileRecordDialog>
+    </DataFileRecordDialog>
 
     <v-dialog v-model="showSaveDialog" persistent width="300">
       <v-card color="primary" dark>
@@ -88,12 +90,14 @@
     <v-dialog v-model="showDialogConfirmDeleteRow" persistent max-width="290">
       <v-card>
         <v-card-title class="headline"> Confirm Delete </v-card-title>
-        <v-card-text
-          >Are you sure you want to delele this row?</v-card-text
-        >
+        <v-card-text>Are you sure you want to delele this row?</v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
-          <v-btn color="red darken-1" text @click="showDialogConfirmDeleteRow = false">
+          <v-btn
+            color="red darken-1"
+            text
+            @click="showDialogConfirmDeleteRow = false"
+          >
             Cancel
           </v-btn>
           <v-btn color="green darken-1" text @click="onPressedConfirmDeleteRow">
@@ -107,7 +111,7 @@
 
 <script>
 import AddDataFileColumnDialog from "../../components/DataFiles/AddDataFileColumnDialog";
-import AddDataFileRecordDialog from "../../components/DataFiles/AddDataFileRecordDialog";
+import DataFileRecordDialog from "../../components/DataFiles/DataFileRecordDialog";
 import { v4 as uuidv4 } from "uuid";
 const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
@@ -115,12 +119,12 @@ export default {
   name: "DataFile",
   components: {
     AddDataFileColumnDialog,
-    AddDataFileRecordDialog,
+    DataFileRecordDialog,
   },
 
   data: () => ({
     showAddColumnDialog: false,
-    showAddRecordDialog: false,
+    showRecordDialog: false,
     db_data_file: null,
     column_definitions: [],
     showSaveDialog: false,
@@ -130,13 +134,14 @@ export default {
     df_rows: [],
     df_search: "",
     delete_item: null,
-    showDialogConfirmDeleteRow: false
+    showDialogConfirmDeleteRow: false,
+    action: "",
+    row_data: null,
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
   },
   computed: {
-    
     name() {
       if (this.db_data_file != null) {
         return this.db_data_file.name;
@@ -154,9 +159,11 @@ export default {
   },
   methods: {
     editRow(row) {
-      console.log("Edit", row);
+      this.action = "edit";
+      this.showRecordDialog = true;
+      this.row_data = row;
     },
-    onPressedConfirmDeleteRow(){
+    onPressedConfirmDeleteRow() {
       for (let i = 0; i < this.df_rows.length; i++) {
         if (this.df_rows[i] == this.delete_item) {
           this.df_rows.splice(i, 1);
@@ -164,20 +171,18 @@ export default {
         }
       }
 
-      for(let i=0; i<this.rows.length; i++){
-        if(this.rows[i]._id == this.delete_item._id){
-          this.rows.splice(i,1);
+      for (let i = 0; i < this.rows.length; i++) {
+        if (this.rows[i]._id == this.delete_item._id) {
+          this.rows.splice(i, 1);
           break;
         }
       }
 
-     
       this.showDialogConfirmDeleteRow = false;
     },
     deleteRow(row) {
       this.delete_item = row;
-      this.showDialogConfirmDeleteRow= true;
-      
+      this.showDialogConfirmDeleteRow = true;
     },
     evaluateTdClass(row_index) {
       if (row_index == 0) return "headerClass";
@@ -233,31 +238,59 @@ export default {
       this.updateTableColumnsAndRows();
       this.showAddColumnDialog = false;
     },
-    onAddRecordDialogClosed(row_data) {
-      if (row_data.length > 0) {
-        const columns = [];
+    onRecordDialogClosed(response) {
+      if ("action" in response) {
+        if (response.action == "edit") {
+          const _rows = [];
+          for (let i = 0; i < this.rows.length; i++) {
+            if (this.rows[i]._id == response.row_id) {
+              const columns = [];
 
-        for (let i = 0; i < row_data.length; i++) {
-          columns.push({
-            name: row_data[i].column,
-            value: row_data[i].value,
+              for (let i = 0; i < response.row_data.length; i++) {
+                columns.push({
+                  name: response.row_data[i].column,
+                  value: response.row_data[i].value,
+                });
+              }
+
+              _rows.push({
+                _id: response.row_id,
+                columns: columns,
+              });
+            } else {
+              _rows.push({
+                _id: this.rows[i]._id,
+                columns: this.rows[i].columns,
+              });
+            }
+          }
+          this.rows = _rows;
+        } else {
+          const columns = [];
+
+          for (let i = 0; i < response.row_data.length; i++) {
+            columns.push({
+              name: response.row_data[i].column,
+              value: response.row_data[i].value,
+            });
+          }
+
+          this.rows.push({
+            _id: uuidv4(),
+            columns: columns,
           });
         }
-
-        this.rows.push({
-          _id: uuidv4(),
-          columns: columns,
-        });
       }
       this.updateTableColumnsAndRows();
-      this.showAddRecordDialog = false;
+      this.showRecordDialog = false;
     },
 
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
     },
     onPressedShowDialogAddRecord() {
-      this.showAddRecordDialog = true;
+      this.action = "add";
+      this.showRecordDialog = true;
     },
     dbGetDataFile(id) {
       this.db_data_file = null;
@@ -278,7 +311,7 @@ export default {
 
         this.df_headers.push({
           value: this.rows[0].columns[i].name,
-          text: this.rows[0].columns[i].name
+          text: this.rows[0].columns[i].name,
         });
       }
 
@@ -301,7 +334,7 @@ export default {
               }
             }
           }
-          row_object['_id'] = row._id;
+          row_object["_id"] = row._id;
 
           this.df_rows.push(row_object);
         }

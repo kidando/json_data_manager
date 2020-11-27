@@ -1,9 +1,9 @@
 <template>
   <div id="add-data-file-record-dialog">
-    <v-dialog :value="showAddRecordDialog" persistent max-width="500px">
+    <v-dialog :value="showRecordDialog" persistent max-width="500px">
       <v-card>
         <v-card-title>
-          <span class="headline">Insert Record</span>
+          <span class="headline">{{action_header}}</span>
         </v-card-title>
         <v-card-text>
           <v-container>
@@ -59,8 +59,8 @@
         <v-card-actions>
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="closeModal"> Cancel </v-btn>
-          <v-btn @click="onPressedAddRecord" color="blue darken-1" text>
-            Insert
+          <v-btn @click="onActionPressed" color="blue darken-1" text>
+            {{action_button_text}}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -72,33 +72,47 @@
 export default {
   name: "AddDataFileRecordDialog",
   props: {
-    showAddRecordDialog: Boolean,
+    showRecordDialog: Boolean,
     column_definitions: Array,
+    action: String,
+    row_data: Object,
   },
   data: () => ({
     show_alert: false,
     alert_text: "",
     input_fields: [],
     dictionary_fields: [],
+    action_header: "",
+    action_button_text: ""
   }),
 
   beforeMount() {
-    for (let i = 0; i < this.column_definitions.length; i++) {
-      const column_def = this.column_definitions[i];
-      // Sepreate Processing Based On Data Type !!IMPORTANT!! Follow data_type check as on form
-      if (
-        column_def.data_type == "String" ||
-        column_def.data_type == "Other (Custom)"
-      ) {
+    if (this.action == "edit") {
+      this.action_header = "Update Record";
+      this.action_button_text = "Update";
+      for (const [key, value] of Object.entries(this.row_data)) {
         this.input_fields.push({
-          name: column_def.name,
-          value: column_def.default_value,
+          name: key,
+          value: value,
         });
-      } else if (column_def.data_type == "Number") {
-        this.input_fields.push({
-          name: column_def.name,
-          value: Number(column_def.default_value),
-        });
+      }
+    } else {
+      this.action_header = "Insert Record";
+      this.action_button_text = "Insert";
+      for (let i = 0; i < this.column_definitions.length; i++) {
+        const column_def = this.column_definitions[i];
+        // Sepreate Processing Based On Data Type !!IMPORTANT!! Follow data_type check as on form
+        if (column_def.data_type == "String") {
+          this.input_fields.push({
+            name: column_def.name,
+            value: column_def.default_value,
+          });
+        } else if (column_def.data_type == "Number") {
+          this.input_fields.push({
+            name: column_def.name,
+            value: Number(column_def.default_value),
+          });
+        }
       }
     }
   },
@@ -107,10 +121,12 @@ export default {
       this.elementRefs.push(el);
     },
 
-    closeModal(row_data=[]) {
-      this.$emit("addRecordDialogClosed",row_data);
+    closeModal(row_data = []) {
+      this.$emit("addRecordDialogClosed", row_data);
     },
-    onPressedAddRecord() {
+    onActionPressed() {
+      const response = {};
+      
       const row_data = [];
 
       this.show_alert = false;
@@ -120,8 +136,7 @@ export default {
         const column_def = this.column_definitions[i];
         // Sepreate Processing Based On Data Type !!IMPORTANT!! Follow data_type check as on form
         if (
-          column_def.data_type == "String" ||
-          column_def.data_type == "Other (Custom)"
+          column_def.data_type == "String"
         ) {
           if (this.input_fields[i].value == "" && column_def.required) {
             is_valid = false;
@@ -145,9 +160,6 @@ export default {
             value: this.input_fields[i].value,
           });
         }
-        // else if(column_def.data_type == 'Dictionary'){
-
-        // }
       }
 
       if (!is_valid) {
@@ -156,7 +168,15 @@ export default {
         return;
       }
 
-      this.closeModal(row_data);
+      if(this.action=="edit"){
+        response['action'] = "edit";
+        response['row_id'] = this.row_data._id;
+      }else{
+        response['action'] = "add";
+      }
+      response['row_data'] = row_data;
+
+      this.closeModal(response);
     },
   },
 };
