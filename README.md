@@ -66,6 +66,9 @@ Ultimately, what I wanted to end up creating is this:
 | Insert records into datafile | ✔️ |
 | Edit records in datafile |  |
 | Delete records in datafile |  |
+| Create Project |  |
+| Edit/Update Project |  |
+| Add DataFiles to projects |  |
 | Enable Auto-save |  |
 | Tutorial on how to use JSON Data Manager |  |
 | Tutorial on how to use JSON Data Manager with Godot |  |
