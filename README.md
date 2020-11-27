@@ -55,6 +55,7 @@ Ultimately, what I wanted to end up creating is this:
 ```
 
 ## Features
+
 | Feature | Done? |
 | :------ | ----: |
 | Create Datafile | ✔️ |
@@ -72,6 +73,7 @@ Ultimately, what I wanted to end up creating is this:
 | Enable Auto-save |  |
 | Tutorial on how to use JSON Data Manager |  |
 | Tutorial on how to use JSON Data Manager with Godot |  |
+
 
 ## Run Dev
 To run the project in dev just run the following in your terminal
