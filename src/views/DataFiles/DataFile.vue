@@ -460,7 +460,7 @@ export default {
 
         this.column_definitions = file.items_data.column_definitions;
         this.rows = file.items_data.rows;
-        this.updateTableColumnsAndRows();
+        //this.updateTableColumnsAndRows();
       });
     },
   },
