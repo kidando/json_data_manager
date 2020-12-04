@@ -87,7 +87,7 @@
     </DataFileRecordDialog>
 
     <EditDataFileColumnsDialog
-      @columnUpdated="onColumnUpdated"
+      @onColumnUpdated="onColumnUpdated"
       :data_types="data_types"
       :column_definitions="column_definitions"
       @editColumnsDialogClosed="onEditColumnsDialogClosed"
@@ -226,79 +226,62 @@ export default {
     },
 
     onColumnUpdated(column_def) {
-      const _column_definitions = [];
+      if ("_id" in column_def) {
+        let _old_column_name = "";
+        // Columns Definitions
+        const _new_column_definitions = [];
 
-      for (let i = 0; i < this.column_definitions.length; i++) {
-        if (column_def.old_column_name == this.column_definitions[i].name) {
-          _column_definitions.push({
-            _id: column_def._id,
-            name: column_def.name,
-            data_type: column_def.data_type,
-            default_value: column_def.default_value,
-            required: column_def.required,
-          });
-        } else {
-          _column_definitions.push({
-            _id: this.column_definitions[i]._id,
-            name: this.column_definitions[i].name,
-            data_type: this.column_definitions[i].data_type,
-            default_value: this.column_definitions[i].default_value,
-            required: this.column_definitions[i].required,
-          });
+        for (let i = 0; i < this.column_definitions.length; i++) {
+          const _new_column_definition = {};
+          const _current_column_definition = this.column_definitions[i];
+
+          _new_column_definition["_id"] = _current_column_definition._id;
+
+          if (column_def._id == _current_column_definition._id) {
+            _old_column_name = _current_column_definition.name;
+            _new_column_definition["name"] = column_def.name;
+            _new_column_definition["data_type"] = column_def.data_type;
+            _new_column_definition["default_value"] = column_def.default_value;
+            _new_column_definition["required"] = column_def.required;
+          } else {
+            _new_column_definition["name"] = _current_column_definition.name;
+            _new_column_definition["data_type"] =
+              _current_column_definition.data_type;
+            _new_column_definition["default_value"] =
+              _current_column_definition.default_value;
+            _new_column_definition["required"] =
+              _current_column_definition.required;
+          }
+          _new_column_definitions.push(_new_column_definition);
         }
-      }
-      this.column_definitions = _column_definitions;
+        this.column_definitions = _new_column_definitions;
 
-      const _rows = [];
+        // Rows
 
-      for (let i = 0; i < this.rows.length; i++) {
-        if (i == 0) {
-          const row_columns = this.rows[i].columns;
-          const _columns = [];
-          for (let j = 0; j < row_columns.length; j++) {
-            if (row_columns[j].name == column_def.old_column_name) {
-              _columns.push({
-                name: column_def.name,
-                value: column_def.name,
-              });
+        const _new_items = [];
+
+        for (let i = 0; i < this.json_items.length; i++) {
+          const _new_item = {};
+          const _current_item = this.json_items[i];
+
+          for (const [key, value] of Object.entries(_current_item)) {
+            if (key == _old_column_name) {
+              _new_item[column_def.name] = value;
             } else {
-              _columns.push({
-                name: row_columns[j].name,
-                value: row_columns[j].value,
-              });
+              _new_item[key] = value;
             }
           }
-          _rows.push({
-            _id: this.rows[i]._id,
-            columns: _columns,
-          });
-        } else {
-          const row_column = this.rows[i].columns;
-          const _columns = [];
 
-          for (let i = 0; i < row_column.length; i++) {
-            if (row_column[i].name == column_def.old_column_name) {
-              _columns.push({
-                name: column_def.name,
-                value: row_column[i].value,
-              });
-            } else {
-              _columns.push({
-                name: row_column[i].name,
-                value: row_column[i].value,
-              });
-            }
-          }
-          _rows.push({
-            _id: this.rows[i]._id,
-            columns: _columns,
-          });
+          _new_items.push(_new_item);
         }
+
+        this.json_items = _new_items;
+        this.saveChanges();
+        this.updateDataTable();
+        this.snackbar = true;
+        this.snackbar_text = "Column Updated";
       }
-      this.rows = _rows;
-      this.updateTableColumnsAndRows();
-      this.snackbar = true;
-      this.snackbar_text = "Column Updated";
+      this.showEditColumnsDialog = false;
     },
     onPressedShowDialogEditColumns() {
       this.showEditColumnsDialog = true;
@@ -323,6 +306,8 @@ export default {
       this.updateDataTable();
 
       this.showDialogConfirmDeleteRow = false;
+      this.snackbar = true;
+      this.snackbar_text = "Row Deleted";
     },
     deleteRow(row) {
       this.delete_item = row;
@@ -389,6 +374,8 @@ export default {
         this.updateDataTable();
       }
       this.showAddColumnDialog = false;
+      this.snackbar = true;
+      this.snackbar_text = "Column Added";
     },
     /**
      * Insert of Update Data File record
@@ -397,6 +384,8 @@ export default {
       if ("action" in response) {
         if (response.action == "insert") {
           this.json_items.push(response.row_data);
+          this.snackbar = true;
+          this.snackbar_text = "Row Inserted";
         } else {
           const _new_items = []; // Replace the whole object or else it wont work
           for (let i = 0; i < this.json_items.length; i++) {
@@ -416,6 +405,8 @@ export default {
             _new_items.push(_new_item);
           }
           this.json_items = _new_items;
+          this.snackbar = true;
+          this.snackbar_text = "Row Updated";
         }
         this.updateDataTable();
       }
