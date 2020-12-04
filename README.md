@@ -60,30 +60,6 @@ Ultimately, what I wanted to end up creating is this:
     ]
 ```
 
-## Features
-
-| Feature | Done? |
-| :------ | ----: |
-| Create Datafile | ✔️ |
-| Import Datafile | |
-| Save changes to Datafile | ✔️ |
-| Add columns to datafile | ✔️ |
-| Edit columns in datafile | ✔️ |
-| Delete columns in datafile |  |
-| Insert records into datafile | ✔️ |
-| Edit records in datafile | ✔️ |
-| Delete records in datafile | ✔️ |
-| Create Project |  |
-| Edit/Update Project |  |
-| Add DataFiles to projects |  |
-| More meaningful main menu |  |
-| Datatype: Pre-defined list (Array) |  |
-| Datatype: Vector2 |  |
-| Datatype: Vector3 |  |
-| Datatype: Multiline-string or Dictionary |  |
-| Enable Auto-save |  |
-| Tutorial on how to use JSON Data Manager |  |
-| Tutorial on how to use JSON Data Manager with Godot |  |
 
 
 ## Run Dev
@@ -99,6 +75,35 @@ To run the project in dev just run the following in your terminal
 
 ## Releases
 soon
+
+## Features / To-Do List
+
+| Item | Done? |
+| :------ | ----: |
+| Create Datafile | ✔️ |
+| Save changes to Datafile | ✔️ |
+| Add columns to datafile | ✔️ |
+| Edit columns in datafile | ✔️ |
+| Insert records into datafile | ✔️ |
+| Edit records in datafile | ✔️ |
+| Delete records in datafile | ✔️ |
+| Delete columns in datafile |  |
+| is_unique validation check for existing columns before saving  |  |
+| Import Datafile | |
+| Re-order columns |  |
+| Create Project |  |
+| Edit/Update Project |  |
+| Add DataFiles to projects |  |
+| More meaningful main menu |  |
+| Datatype: Pre-defined list (Array) |  |
+| Datatype: Vector2 |  |
+| Datatype: Vector3 |  |
+| Datatype: Multiline-string or Dictionary |  |
+| Enable/Disable Auto-save |  |
+| Save/load window size state |  |
+| Tutorial on how to use JSON Data Manager |  |
+| Tutorial on how to use JSON Data Manager with Godot |  |
+
 
 ## Licence
 MIT License - Copyright (c) 2020 Leon Oscar Kidando

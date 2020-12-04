@@ -85,6 +85,7 @@
 
 <script>
 const array = require("lodash/array");
+import { v4 as uuidv4 } from "uuid";
 export default {
   name: "AddDataFileColumnDialog",
   props: {
@@ -101,7 +102,20 @@ export default {
     boolean_default_value: "True",
     number_default_value: 0,
     string_default_value: "",
-    boolean_default_values: ["", "True", "False"],
+    boolean_default_values: [
+      {
+        text: "No Default",
+        value: "",
+      },
+      {
+        text: "true",
+        value: true,
+      },
+      {
+        text: "false",
+        value: false,
+      },
+    ],
     rules: {
       required: (value) => !!value || "Required",
     },
@@ -127,38 +141,26 @@ export default {
         return;
       }
 
-      let column_definition = {};
+      const column_definition = {};
+      column_definition['_id'] = uuidv4();
+      column_definition['name'] = this.name;
+      column_definition['data_type'] = this.data_type;
+      column_definition['required'] = this.column_check_required;
 
       switch (this.data_type) {
         case "Boolean":
-          column_definition = {
-            name: this.name,
-            data_type: this.data_type,
-            default_value: this.boolean_default_value,
-            required: this.column_check_required,
-          };
+          column_definition['default_value'] = this.boolean_default_value;
           break;
 
     
 
         case "Number":
-          column_definition = {
-            name: this.name,
-            data_type: this.data_type,
-            default_value: Number(this.number_default_value),
-            required: this.column_check_required,
-          };
-
+          column_definition['default_value'] = Number(this.number_default_value);
           break;
 
 
         case "String":
-          column_definition = {
-            name: this.name,
-            data_type: this.data_type,
-            default_value: this.string_default_value,
-            required: this.column_check_required,
-          };
+          column_definition['default_value'] =this.string_default_value;
           break;
       }
 
@@ -181,7 +183,7 @@ export default {
     },
 
     closeModal(column_definition = []) {
-      this.$emit("addColumnDialogClosed", column_definition);
+      this.$emit("onAddColumnDialogClosed", column_definition);
     },
     onChangeDataType(item) {
       switch (item) {

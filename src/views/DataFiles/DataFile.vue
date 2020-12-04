@@ -5,9 +5,13 @@
         <h2>{{ name }}</h2>
         <h5 class="font-weight-regular text--lighten-4">{{ file_path }}</h5>
       </div>
-      <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
-        ><i class="fas fa-save mr-2"></i> Save</v-btn
-      >
+      <v-btn
+        v-if="!autoSave"
+        @click="onPressedDataFileSave"
+        elevation="0"
+        color="success"
+        ><i class="fas fa-save mr-2"></i
+      ></v-btn>
     </div>
     <hr />
     <v-row>
@@ -52,8 +56,8 @@
             ></v-text-field>
           </v-card-title>
           <v-data-table
-            :headers="df_headers"
-            :items="df_rows"
+            :headers="data_manager_table_headers"
+            :items="data_manager_table_rows"
             :search="df_search"
           >
             <template v-slot:item.actions="{ item }">
@@ -67,13 +71,13 @@
       </v-col>
     </v-row>
     <AddDataFileColumnDialog
-      @addColumnDialogClosed="onAddColumnDialogClosed"
+      @onAddColumnDialogClosed="onAddColumnDialogClosed"
       :showAddColumnDialog="showAddColumnDialog"
       :data_types="data_types"
     ></AddDataFileColumnDialog>
 
     <DataFileRecordDialog
-      @addRecordDialogClosed="onRecordDialogClosed"
+      @onRecordDialogClosed="onRecordDialogClosed"
       :showRecordDialog="showRecordDialog"
       :column_definitions="column_definitions"
       :action="action"
@@ -83,7 +87,7 @@
     </DataFileRecordDialog>
 
     <EditDataFileColumnsDialog
-      @columnUpdated="onColumnUpdated"
+      @onColumnUpdated="onColumnUpdated"
       :data_types="data_types"
       :column_definitions="column_definitions"
       @editColumnsDialogClosed="onEditColumnsDialogClosed"
@@ -143,6 +147,11 @@ import EditDataFileColumnsDialog from "../../components/DataFiles/EditDataFileCo
 import { v4 as uuidv4 } from "uuid";
 const dayjs = require("dayjs");
 const { ipcRenderer } = require("electron");
+
+const list_formats = {
+  DATA_MANAGER_TABLE: "data_manager_table",
+  JSON_FILE: "json_file",
+};
 export default {
   name: "DataFile",
   components: {
@@ -157,10 +166,10 @@ export default {
     db_data_file: null,
     column_definitions: [],
     showSaveDialog: false,
-    display_rows: [],
+    json_items: [], // As saved in JSON file
     rows: [],
-    df_headers: [],
-    df_rows: [],
+    data_manager_table_headers: [],
+    data_manager_table_rows: [],
     df_search: "",
     delete_item: null,
     showDialogConfirmDeleteRow: false,
@@ -170,6 +179,7 @@ export default {
     data_types: ["Boolean", "Number", "String"],
     snackbar: false,
     snackbar_text: "",
+    autoSave: true,
   }),
   mounted() {
     this.dbGetDataFile(this.$route.params.id);
@@ -191,76 +201,87 @@ export default {
     },
   },
   methods: {
-    onColumnUpdated(column_def) {
-      const _column_definitions = [];
-
+    /**
+     * Updates Column headers and rows
+     * based on updates in column_definitions and json_items (in JSON FILE)
+     */
+    updateDataTable() {
+      // Update Columns
+      const _column_headers = [];
       for (let i = 0; i < this.column_definitions.length; i++) {
-        if (column_def.old_column_name == this.column_definitions[i].name) {
-          _column_definitions.push({
-            name: column_def.name,
-            data_type: column_def.data_type,
-            default_value: column_def.default_value,
-          });
-        } else {
-          _column_definitions.push({
-            name: this.column_definitions[i].name,
-            data_type: this.column_definitions[i].data_type,
-            default_value: this.column_definitions[i].default_value,
-          });
-        }
+        _column_headers.push({
+          value: this.column_definitions[i].name,
+          text: this.column_definitions[i].name,
+        });
       }
-      this.column_definitions = _column_definitions;
+      if (_column_headers.length >= 1) {
+        _column_headers.push({
+          value: "actions",
+          align: "end",
+          text: "actions",
+        });
+      }
+      this.data_manager_table_headers = _column_headers;
+      this.data_manager_table_rows = this.json_items;
+    },
 
-      const _rows = [];
+    onColumnUpdated(column_def) {
+      if ("_id" in column_def) {
+        let _old_column_name = "";
+        // Columns Definitions
+        const _new_column_definitions = [];
 
-      for (let i = 0; i < this.rows.length; i++) {
-        if (i == 0) {
-          const row_columns = this.rows[i].columns;
-          const _columns = [];
-          for (let j = 0; j < row_columns.length; j++) {
-            if (row_columns[j].name == column_def.old_column_name) {
-              _columns.push({
-                name: column_def.name,
-                value: column_def.name,
-              });
+        for (let i = 0; i < this.column_definitions.length; i++) {
+          const _new_column_definition = {};
+          const _current_column_definition = this.column_definitions[i];
+
+          _new_column_definition["_id"] = _current_column_definition._id;
+
+          if (column_def._id == _current_column_definition._id) {
+            _old_column_name = _current_column_definition.name;
+            _new_column_definition["name"] = column_def.name;
+            _new_column_definition["data_type"] = column_def.data_type;
+            _new_column_definition["default_value"] = column_def.default_value;
+            _new_column_definition["required"] = column_def.required;
+          } else {
+            _new_column_definition["name"] = _current_column_definition.name;
+            _new_column_definition["data_type"] =
+              _current_column_definition.data_type;
+            _new_column_definition["default_value"] =
+              _current_column_definition.default_value;
+            _new_column_definition["required"] =
+              _current_column_definition.required;
+          }
+          _new_column_definitions.push(_new_column_definition);
+        }
+        this.column_definitions = _new_column_definitions;
+
+        // Rows
+
+        const _new_items = [];
+
+        for (let i = 0; i < this.json_items.length; i++) {
+          const _new_item = {};
+          const _current_item = this.json_items[i];
+
+          for (const [key, value] of Object.entries(_current_item)) {
+            if (key == _old_column_name) {
+              _new_item[column_def.name] = value;
             } else {
-              _columns.push({
-                name: row_columns[j].name,
-                value: row_columns[j].value,
-              });
+              _new_item[key] = value;
             }
           }
-          _rows.push({
-            _id: this.rows[i]._id,
-            columns: _columns,
-          });
-        } else {
-          const row_column = this.rows[i].columns;
-          const _columns = [];
 
-          for (let i = 0; i < row_column.length; i++) {
-            if (row_column[i].name == column_def.old_column_name) {
-              _columns.push({
-                name: column_def.name,
-                value: row_column[i].value,
-              });
-            } else {
-              _columns.push({
-                name: row_column[i].name,
-                value: row_column[i].value,
-              });
-            }
-          }
-          _rows.push({
-            _id: this.rows[i]._id,
-            columns: _columns,
-          });
+          _new_items.push(_new_item);
         }
+
+        this.json_items = _new_items;
+        this.saveChanges();
+        this.updateDataTable();
+        this.snackbar = true;
+        this.snackbar_text = "Column Updated";
       }
-      this.rows = _rows;
-      this.updateTableColumnsAndRows();
-      this.snackbar = true;
-      this.snackbar_text = "Column Updated";
+      this.showEditColumnsDialog = false;
     },
     onPressedShowDialogEditColumns() {
       this.showEditColumnsDialog = true;
@@ -269,26 +290,24 @@ export default {
       this.showEditColumnsDialog = false;
     },
     editRow(row) {
-      this.action = "edit";
+      this.action = "update";
       this.showRecordDialog = true;
       this.row_data = row;
     },
     onPressedConfirmDeleteRow() {
-      for (let i = 0; i < this.df_rows.length; i++) {
-        if (this.df_rows[i] == this.delete_item) {
-          this.df_rows.splice(i, 1);
+      for (let i = 0; i < this.json_items.length; i++) {
+        if (this.json_items[i] == this.delete_item) {
+          this.json_items.splice(i, 1);
           break;
         }
       }
 
-      for (let i = 0; i < this.rows.length; i++) {
-        if (this.rows[i]._id == this.delete_item._id) {
-          this.rows.splice(i, 1);
-          break;
-        }
-      }
+      this.saveChanges();
+      this.updateDataTable();
 
       this.showDialogConfirmDeleteRow = false;
+      this.snackbar = true;
+      this.snackbar_text = "Row Deleted";
     },
     deleteRow(row) {
       this.delete_item = row;
@@ -313,7 +332,7 @@ export default {
         },
         items_data: {
           column_definitions: this.column_definitions,
-          rows: this.rows,
+          rows: this.json_items,
         },
       };
 
@@ -322,76 +341,76 @@ export default {
         this.showSaveDialog = false;
       });
     },
-    onAddColumnDialogClosed(column_definition) {
-      if ("data_type" in column_definition) {
-        this.column_definitions.push(column_definition);
-
-        if (this.rows.length > 0) {
-          for (let i = 0; i < this.rows.length; i++) {
-            this.rows[i].columns.push({
-              name: column_definition.name,
-              value: i == 0 ? column_definition.name : "",
-            });
-          }
-        } else {
-          this.rows.push({
-            _id: "column-headers",
-            columns: [
-              {
-                name: column_definition.name,
-                value: column_definition.name,
-              },
-            ],
-          });
-        }
+    saveChanges() {
+      if (this.autoSave) {
+        this.onPressedDataFileSave();
       }
-      this.updateTableColumnsAndRows();
-      this.showAddColumnDialog = false;
     },
+    /**
+     * Adds extra column to Data Table
+     * Adds extra property (with default value) to all items in JSON File
+     */
+    onAddColumnDialogClosed(_new_column_definition) {
+      if ("data_type" in _new_column_definition) {
+        // Update Column Definitions
+        this.column_definitions.push(_new_column_definition);
+
+        // Update JSON Data File Items with new column
+        const _rows = [];
+        for (let i = 0; i < this.json_items.length; i++) {
+          const _curr_row = this.json_items[i];
+          const _new_row = {};
+          for (const [key, value] of Object.entries(_curr_row)) {
+            _new_row[key] = value;
+          }
+          _new_row[_new_column_definition.name] =
+            _new_column_definition.default_value;
+          _rows.push(_new_row);
+        }
+
+        this.json_items = _rows;
+
+        this.saveChanges();
+        this.updateDataTable();
+      }
+      this.showAddColumnDialog = false;
+      this.snackbar = true;
+      this.snackbar_text = "Column Added";
+    },
+    /**
+     * Insert of Update Data File record
+     */
     onRecordDialogClosed(response) {
       if ("action" in response) {
-        if (response.action == "edit") {
-          const _rows = [];
-          for (let i = 0; i < this.rows.length; i++) {
-            if (this.rows[i]._id == response.row_id) {
-              const columns = [];
-
-              for (let i = 0; i < response.row_data.length; i++) {
-                columns.push({
-                  name: response.row_data[i].column,
-                  value: response.row_data[i].value,
-                });
-              }
-
-              _rows.push({
-                _id: response.row_id,
-                columns: columns,
-              });
-            } else {
-              _rows.push({
-                _id: this.rows[i]._id,
-                columns: this.rows[i].columns,
-              });
-            }
-          }
-          this.rows = _rows;
+        if (response.action == "insert") {
+          this.json_items.push(response.row_data);
+          this.snackbar = true;
+          this.snackbar_text = "Row Inserted";
         } else {
-          const columns = [];
+          const _new_items = []; // Replace the whole object or else it wont work
+          for (let i = 0; i < this.json_items.length; i++) {
+            const _curr_item = this.json_items[i];
+            const _new_item = {};
 
-          for (let i = 0; i < response.row_data.length; i++) {
-            columns.push({
-              name: response.row_data[i].column,
-              value: response.row_data[i].value,
-            });
+            if (_curr_item._id == response.row_data._id) {
+              for (const [key, value] of Object.entries(response.row_data)) {
+                _new_item[key] = value;
+              }
+            } else {
+              for (const [key, value] of Object.entries(_curr_item)) {
+                _new_item[key] = value;
+              }
+            }
+
+            _new_items.push(_new_item);
           }
-
-          this.rows.push({
-            _id: uuidv4(),
-            columns: columns,
-          });
+          this.json_items = _new_items;
+          this.snackbar = true;
+          this.snackbar_text = "Row Updated";
         }
+        this.updateDataTable();
       }
-      this.updateTableColumnsAndRows();
+      this.saveChanges();
       this.showRecordDialog = false;
     },
 
@@ -399,7 +418,7 @@ export default {
       this.showAddColumnDialog = true;
     },
     onPressedShowDialogAddRecord() {
-      this.action = "add";
+      this.action = "insert";
       this.showRecordDialog = true;
     },
     dbGetDataFile(id) {
@@ -414,19 +433,20 @@ export default {
     },
 
     updateTableColumnsAndRows() {
-      this.df_headers = [];
-      this.df_rows = [];
+      this.data_manager_table_headers = [];
+      this.data_manager_table_rows = [];
       for (let i = 0; i < this.rows[0].columns.length; i++) {
         const header = this.rows[0].columns[i];
 
-        this.df_headers.push({
+        this.data_manager_table_headers.push({
           value: this.rows[0].columns[i].name,
           text: this.rows[0].columns[i].name,
         });
       }
 
-      this.df_headers.push({
+      this.data_manager_table_headers.push({
         value: "actions",
+        align: "end",
         text: "Actions",
       });
 
@@ -438,19 +458,22 @@ export default {
           for (let j = 0; j < row.columns.length; j++) {
             const column = row.columns[j];
 
-            for (let k = 0; k < this.df_headers.length; k++) {
-              if (this.df_headers[k].value == column.name) {
+            for (let k = 0; k < this.data_manager_table_headers.length; k++) {
+              if (this.data_manager_table_headers[k].value == column.name) {
                 row_object[column.name] = column.value;
               }
             }
           }
           row_object["_id"] = row._id;
 
-          this.df_rows.push(row_object);
+          this.data_manager_table_rows.push(row_object);
         }
       }
     },
 
+    /**
+     * Get Data File Contents based on LocalDrive Path
+     */
     fsGetFileContents(path) {
       this.column_definitions = [];
       this.rows = [];
@@ -459,8 +482,9 @@ export default {
         const file = JSON.parse(data);
 
         this.column_definitions = file.items_data.column_definitions;
-        this.rows = file.items_data.rows;
-        this.updateTableColumnsAndRows();
+        this.json_items = file.items_data.rows;
+
+        this.updateDataTable();
       });
     },
   },

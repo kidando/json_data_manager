@@ -2,8 +2,8 @@
   <div id="add-data-file-record-dialog">
     <v-dialog :value="showRecordDialog" persistent max-width="500px">
       <v-card>
-        <v-card-title>
-          <span class="headline">{{action_header}}</span>
+        <v-card-title class="d-flex justify-space-between">
+          <span class="headline">{{ action_header }} </span>
         </v-card-title>
         <v-card-text>
           <v-container>
@@ -16,41 +16,26 @@
                   type="error"
                   v-html="alert_text"
                 ></v-alert>
+
                 <div v-for="(column, i) in column_definitions" :key="i">
-                  <div
-                    v-if="
-                      column.data_type == 'String' ||
-                      column.data_type == 'Other (Custom)'
-                    "
-                  >
-                    <v-text-field
-                      :id="i.toString()"
-                      :label="column.name"
-                      :value="column.default_value"
-                      v-model="input_fields[i].value"
-                    >
-                    </v-text-field>
-                  </div>
-                  <div v-else-if="column.data_type == 'Number'">
-                    <v-text-field
-                      v-model="input_fields[i].value"
-                      :label="column.name"
-                      type="number"
-                    >
-                    </v-text-field>
-                  </div>
-
-                  <div v-else-if="column.data_type == 'Dictionary'">
-                    <div>{{ column.name }}</div>
-
-                    <v-text-field
-                      v-model="dictionary_fields[j].value"
-                      v-for="(variable, j) in column.default_value"
-                      :key="j"
-                      :label="[variable.name + ' (' + variable.type + ')']"
-                    >
-                    </v-text-field>
-                  </div>
+                  <v-text-field
+                    v-model="inputs[column._id]"
+                    v-if="column.data_type == 'String'"
+                    :label="column.name"
+                  ></v-text-field>
+                  <v-text-field
+                    v-model="inputs[column._id]"
+                    type="number"
+                    v-if="column.data_type == 'Number'"
+                    :value="column.default_value"
+                    :label="column.name"
+                  ></v-text-field>
+                  <v-select
+                    v-model="inputs[column._id]"
+                    v-if="column.data_type == 'Boolean'"
+                    :items="boolean_options"
+                    :label="column.name"
+                  ></v-select>
                 </div>
               </v-col>
             </v-row>
@@ -60,7 +45,7 @@
           <v-spacer></v-spacer>
           <v-btn color="blue darken-1" text @click="closeModal"> Cancel </v-btn>
           <v-btn @click="onActionPressed" color="blue darken-1" text>
-            {{action_button_text}}
+            {{ action_button_text }}
           </v-btn>
         </v-card-actions>
       </v-card>
@@ -68,9 +53,12 @@
   </div>
 </template>
 
+
+
 <script>
+import { v4 as uuidv4 } from "uuid";
 export default {
-  name: "AddDataFileRecordDialog",
+  name: "DataFileRecordDialog",
   props: {
     showRecordDialog: Boolean,
     column_definitions: Array,
@@ -80,103 +68,87 @@ export default {
   data: () => ({
     show_alert: false,
     alert_text: "",
-    input_fields: [],
-    dictionary_fields: [],
+    boolean_options: [
+      {
+        text: "No Default",
+        value: "",
+      },
+      {
+        text: "true",
+        value: true,
+      },
+      {
+        text: "false",
+        value: false,
+      },
+    ],
+    inputs: {},
+
     action_header: "",
-    action_button_text: ""
+    action_button_text: "",
   }),
 
   beforeMount() {
-    if (this.action == "edit") {
-      this.action_header = "Update Record";
-      this.action_button_text = "Update";
-      for (const [key, value] of Object.entries(this.row_data)) {
-        this.input_fields.push({
-          name: key,
-          value: value,
-        });
-      }
+    if (this.action == "insert") {
+      this.column_definitions.forEach((column) => {
+        this.inputs[column._id] = column.default_value;
+      });
     } else {
-      this.action_header = "Insert Record";
-      this.action_button_text = "Insert";
-      for (let i = 0; i < this.column_definitions.length; i++) {
-        const column_def = this.column_definitions[i];
-        // Sepreate Processing Based On Data Type !!IMPORTANT!! Follow data_type check as on form
-        if (column_def.data_type == "String") {
-          this.input_fields.push({
-            name: column_def.name,
-            value: column_def.default_value,
-          });
-        } else if (column_def.data_type == "Number") {
-          this.input_fields.push({
-            name: column_def.name,
-            value: Number(column_def.default_value),
-          });
+      this.column_definitions.forEach((column) => {
+        for (const [key, value] of Object.entries(this.row_data)) {
+          if(key==column.name){
+            this.inputs[column._id] = value;
+            break;
+          }
         }
-      }
+
+        
+      });
     }
   },
-  methods: {
-    setElementRef(el) {
-      this.elementRefs.push(el);
-    },
 
-    closeModal(row_data = []) {
-      this.$emit("addRecordDialogClosed", row_data);
+  mounted() {
+    if (this.action == "insert") {
+      this.action_header = "Insert New Record";
+      this.action_button_text = "Insert";
+      // Pre-build the v-models for inputs bind to column_ids
+    } else {
+      // this.action == "edit"
+      this.action_header = "Update Record";
+      this.action_button_text = "Update";
+    }
+  },
+
+  methods: {
+    closeModal(response = {}) {
+      this.$emit("onRecordDialogClosed", response);
     },
     onActionPressed() {
-      const response = {};
-      
-      const row_data = [];
-
-      this.show_alert = false;
-      let is_valid = true;
-      let error_list = "";
-      for (let i = 0; i < this.column_definitions.length; i++) {
-        const column_def = this.column_definitions[i];
-        // Sepreate Processing Based On Data Type !!IMPORTANT!! Follow data_type check as on form
-        if (
-          column_def.data_type == "String"
-        ) {
-          if (this.input_fields[i].value == "" && column_def.required) {
-            is_valid = false;
-            error_list += `${this.input_fields[i].name} is required.`;
-            error_list += "<br>";
-          }
-          // Regardless
-          row_data.push({
-            column: column_def.name,
-            value: this.input_fields[i].value,
-          });
-        } else if (column_def.data_type == "Number") {
-          if (this.input_fields[i].value == "" && column_def.required) {
-            is_valid = false;
-            error_list += `${this.input_fields[i].name} is required.`;
-            error_list += "<br>";
-          }
-          // Regardless
-          row_data.push({
-            column: column_def.name,
-            value: this.input_fields[i].value,
-          });
-        }
-      }
-
-      if (!is_valid) {
-        this.show_alert = true;
-        this.alert_text = error_list;
-        return;
-      }
-
-      if(this.action=="edit"){
-        response['action'] = "edit";
-        response['row_id'] = this.row_data._id;
+      const _row = {};
+      let _action = "insert";
+      if (this.action == "insert") {
+        _row["_id"] = uuidv4();
       }else{
-        response['action'] = "add";
+         _action = "update";
+        _row["_id"] = this.row_data._id;
       }
-      response['row_data'] = row_data;
 
-      this.closeModal(response);
+      for (let i = 0; i < this.column_definitions.length; i++) {
+          const _column = this.column_definitions[i];
+          for (const [key, value] of Object.entries(this.inputs)) {
+            if (_column._id == key) {
+              _row[_column.name] = value;
+              break;
+            }
+          }
+        }
+
+      const response = {
+        row_data: _row,
+        action: _action,
+      };
+
+      this.$emit("onRecordDialogClosed", response);
     },
   },
 };
