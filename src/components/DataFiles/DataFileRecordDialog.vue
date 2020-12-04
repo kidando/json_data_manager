@@ -89,7 +89,7 @@ export default {
   }),
 
   beforeMount() {
-    if (this.action == "add") {
+    if (this.action == "insert") {
       this.column_definitions.forEach((column) => {
         this.inputs[column._id] = column.default_value;
       });

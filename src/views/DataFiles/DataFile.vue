@@ -312,19 +312,15 @@ export default {
       this.row_data = row;
     },
     onPressedConfirmDeleteRow() {
-      for (let i = 0; i < this.data_manager_table_rows.length; i++) {
-        if (this.data_manager_table_rows[i] == this.delete_item) {
-          this.data_manager_table_rows.splice(i, 1);
+      for (let i = 0; i < this.json_items.length; i++) {
+        if (this.json_items[i] == this.delete_item) {
+          this.json_items.splice(i, 1);
           break;
         }
       }
 
-      for (let i = 0; i < this.rows.length; i++) {
-        if (this.rows[i]._id == this.delete_item._id) {
-          this.rows.splice(i, 1);
-          break;
-        }
-      }
+      this.saveChanges();
+      this.updateDataTable();
 
       this.showDialogConfirmDeleteRow = false;
     },
@@ -406,7 +402,7 @@ export default {
           for (let i = 0; i < this.json_items.length; i++) {
             const _curr_item = this.json_items[i];
             const _new_item = {};
-    
+
             if (_curr_item._id == response.row_data._id) {
               for (const [key, value] of Object.entries(response.row_data)) {
                 _new_item[key] = value;
