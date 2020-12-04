@@ -78,6 +78,12 @@ soon
 
 ## Features / To-Do List
 
+Overview of progress so far: Right now the following:
+- Add, View and Edit data files
+- Add columns and rows/records
+- Edit columns and rows/records
+- Delete rows/records
+
 | Item | Done? |
 | :------ | ----: |
 | Create Datafile | ✔️ |
@@ -101,8 +107,9 @@ soon
 | Datatype: Multiline-string or Dictionary |  |
 | Enable/Disable Auto-save |  |
 | Save/load window size state |  |
-| Tutorial on how to use JSON Data Manager |  |
-| Tutorial on how to use JSON Data Manager with Godot |  |
+| Text Tutorial on how to use JSON Data Manager |  |
+| Video Tutorial on how to use JSON Data Manager |  |
+| Video Tutorial on how I use JSON Data Manager with Godot |  |
 
 
 ## Licence
