@@ -54,9 +54,9 @@ Ultimately, what I wanted to end up creating is this:
     ]
 ```
 
-## Features
+## Features / To-Do List
 
-| Feature | Done? |
+| Item | Done? |
 | :------ | ----: |
 | Convert JSON file To and From Godot Dictionray Style |  |
 | Create Datafile | ✔️ |
@@ -77,7 +77,8 @@ Ultimately, what I wanted to end up creating is this:
 | Datatype: Vector2 |  |
 | Datatype: Vector3 |  |
 | Datatype: Multiline-string or Dictionary |  |
-| Enable Auto-save |  |
+| Enable/Disable Auto-save |  |
+| Save/load window size state |  |
 | Tutorial on how to use JSON Data Manager |  |
 | Tutorial on how to use JSON Data Manager with Godot |  |
 

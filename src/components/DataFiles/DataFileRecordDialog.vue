@@ -1,6 +1,5 @@
 <template>
   <div id="add-data-file-record-dialog">
-    
     <v-dialog :value="showRecordDialog" persistent max-width="500px">
       <v-card>
         <v-card-title class="d-flex justify-space-between">
@@ -17,26 +16,25 @@
                   type="error"
                   v-html="alert_text"
                 ></v-alert>
-               
 
                 <div v-for="(column, i) in column_definitions" :key="i">
                   <v-text-field
-                  v-model="inputs[column._id]"
+                    v-model="inputs[column._id]"
                     v-if="column.data_type == 'String'"
                     :label="column.name"
                   ></v-text-field>
                   <v-text-field
-                  v-model="inputs[column._id]"
+                    v-model="inputs[column._id]"
                     type="number"
                     v-if="column.data_type == 'Number'"
                     :value="column.default_value"
                     :label="column.name"
                   ></v-text-field>
                   <v-select
-                  v-model="inputs[column._id]"
+                    v-model="inputs[column._id]"
                     v-if="column.data_type == 'Boolean'"
                     :items="boolean_options"
-                    label="Standard"
+                    :label="column.name"
                   ></v-select>
                 </div>
               </v-col>
@@ -58,6 +56,7 @@
 
 
 <script>
+import { v4 as uuidv4 } from "uuid";
 export default {
   name: "DataFileRecordDialog",
   props: {
@@ -83,27 +82,36 @@ export default {
         value: false,
       },
     ],
-    inputs:{},
-
+    inputs: {},
 
     action_header: "",
     action_button_text: "",
   }),
 
-  beforeMount(){
-    this.column_definitions.forEach(column => {
-      this.inputs[column._id] = column.default_value;
-    });
+  beforeMount() {
+    if (this.action == "add") {
+      this.column_definitions.forEach((column) => {
+        this.inputs[column._id] = column.default_value;
+      });
+    } else {
+      this.column_definitions.forEach((column) => {
+        for (const [key, value] of Object.entries(this.row_data)) {
+          if(key==column.name){
+            this.inputs[column._id] = value;
+            break;
+          }
+        }
+
+        
+      });
+    }
   },
 
   mounted() {
-   
     if (this.action == "insert") {
       this.action_header = "Insert New Record";
       this.action_button_text = "Insert";
       // Pre-build the v-models for inputs bind to column_ids
-
-     
     } else {
       // this.action == "edit"
       this.action_header = "Update Record";
@@ -112,12 +120,35 @@ export default {
   },
 
   methods: {
-    
-    closeModal(row_data = []) {
-      this.$emit("addRecordDialogClosed", row_data);
+    closeModal(response = {}) {
+      this.$emit("onRecordDialogClosed", response);
     },
-    onActionPressed(){
-      console.log('Yes');
+    onActionPressed() {
+      const _row = {};
+      let _action = "insert";
+      if (this.action == "insert") {
+        _row["_id"] = uuidv4();
+      }else{
+         _action = "update";
+        _row["_id"] = this.row_data._id;
+      }
+
+      for (let i = 0; i < this.column_definitions.length; i++) {
+          const _column = this.column_definitions[i];
+          for (const [key, value] of Object.entries(this.inputs)) {
+            if (_column._id == key) {
+              _row[_column.name] = value;
+              break;
+            }
+          }
+        }
+
+      const response = {
+        row_data: _row,
+        action: _action,
+      };
+
+      this.$emit("onRecordDialogClosed", response);
     },
   },
 };

@@ -5,9 +5,13 @@
         <h2>{{ name }}</h2>
         <h5 class="font-weight-regular text--lighten-4">{{ file_path }}</h5>
       </div>
-      <v-btn @click="onPressedDataFileSave" elevation="0" color="success"
-        ><i class="fas fa-save mr-2"></i> Save</v-btn
-      >
+      <v-btn
+        v-if="!autoSave"
+        @click="onPressedDataFileSave"
+        elevation="0"
+        color="success"
+        ><i class="fas fa-save mr-2"></i
+      ></v-btn>
     </div>
     <hr />
     <v-row>
@@ -67,13 +71,13 @@
       </v-col>
     </v-row>
     <AddDataFileColumnDialog
-      @addColumnDialogClosed="onAddColumnDialogClosed"
+      @onAddColumnDialogClosed="onAddColumnDialogClosed"
       :showAddColumnDialog="showAddColumnDialog"
       :data_types="data_types"
     ></AddDataFileColumnDialog>
 
     <DataFileRecordDialog
-      @addRecordDialogClosed="onRecordDialogClosed"
+      @onRecordDialogClosed="onRecordDialogClosed"
       :showRecordDialog="showRecordDialog"
       :column_definitions="column_definitions"
       :action="action"
@@ -213,6 +217,7 @@ export default {
       if (_column_headers.length >= 1) {
         _column_headers.push({
           value: "actions",
+          align: "end",
           text: "actions",
         });
       }
@@ -384,7 +389,7 @@ export default {
 
         this.json_items = _rows;
 
-        // this.saveChanges();
+        this.saveChanges();
         this.updateDataTable();
       }
       this.showAddColumnDialog = false;
@@ -392,45 +397,35 @@ export default {
     /**
      * Insert of Update Data File record
      */
-    onRecordDialogClosed(_new_row) {
-      if ("action" in _new_row) {
-        if (_new_row.action == "edit") {
-          // This is an UPDATE operation
-          const _new_json_items = [];
+    onRecordDialogClosed(response) {
+      if ("action" in response) {
+        if (response.action == "insert") {
+          this.json_items.push(response.row_data);
+        } else {
+          const _new_items = []; // Replace the whole object or else it wont work
           for (let i = 0; i < this.json_items.length; i++) {
-            const _current_json_item = this.json_items[i];
-            const _new_json_item = {};
-            if (_current_json_item._id == _new_row._id) {
-              for (const [key, value] of Object.entries(_current_json_item)) {
-                if (_new_row.column == key) {
-                  _new_json_item[key] = _new_row.value;
-                }
+            const _curr_item = this.json_items[i];
+            const _new_item = {};
+    
+            if (_curr_item._id == response.row_data._id) {
+              for (const [key, value] of Object.entries(response.row_data)) {
+                _new_item[key] = value;
               }
             } else {
-              for (const [key, value] of Object.entries(_current_json_item)) {
-                _new_json_item[key] = value;
+              for (const [key, value] of Object.entries(_curr_item)) {
+                _new_item[key] = value;
               }
             }
 
-            _new_json_items.push(_new_json_item);
+            _new_items.push(_new_item);
           }
-          this.json_items = _new_json_items;
-        } else {
-          //This is an INSERT Operation
-          const _row = {};
-          _row["_id"] = uuidv4();
-          for (let i = 0; i < _new_row.row_data.length; i++) {
-            const _current_row = _new_row.row_data[i];
-            _row[_current_row.column] = _current_row.value;
-          }
-          this.json_items.push(_row);
+          this.json_items = _new_items;
         }
-
         this.updateDataTable();
       }
+      this.saveChanges();
       this.showRecordDialog = false;
     },
-    
 
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
@@ -464,6 +459,7 @@ export default {
 
       this.data_manager_table_headers.push({
         value: "actions",
+        align: "end",
         text: "Actions",
       });
 

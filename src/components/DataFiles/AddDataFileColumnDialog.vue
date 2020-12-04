@@ -102,7 +102,20 @@ export default {
     boolean_default_value: "True",
     number_default_value: 0,
     string_default_value: "",
-    boolean_default_values: ["", "True", "False"],
+    boolean_default_values: [
+      {
+        text: "No Default",
+        value: "",
+      },
+      {
+        text: "true",
+        value: true,
+      },
+      {
+        text: "false",
+        value: false,
+      },
+    ],
     rules: {
       required: (value) => !!value || "Required",
     },
@@ -142,9 +155,7 @@ export default {
     
 
         case "Number":
-  
           column_definition['default_value'] = Number(this.number_default_value);
-
           break;
 
 
@@ -172,7 +183,7 @@ export default {
     },
 
     closeModal(column_definition = []) {
-      this.$emit("addColumnDialogClosed", column_definition);
+      this.$emit("onAddColumnDialogClosed", column_definition);
     },
     onChangeDataType(item) {
       switch (item) {
