@@ -80,6 +80,7 @@ soon
 
 | Item | Done? |
 | :------ | ----: |
+| Convert JSON file To and From Godot Dictionray Style |  |
 | Create Datafile | ✔️ |
 | Save changes to Datafile | ✔️ |
 | Add columns to datafile | ✔️ |
