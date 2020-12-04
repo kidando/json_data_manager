@@ -58,6 +58,7 @@ Ultimately, what I wanted to end up creating is this:
 
 | Feature | Done? |
 | :------ | ----: |
+| Convert JSON file To and From Godot Dictionray Style |  |
 | Create Datafile | ✔️ |
 | Import Datafile | |
 | Save changes to Datafile | ✔️ |
@@ -67,6 +68,7 @@ Ultimately, what I wanted to end up creating is this:
 | Insert records into datafile | ✔️ |
 | Edit records in datafile | ✔️ |
 | Delete records in datafile | ✔️ |
+| Re-order columns |  |
 | Create Project |  |
 | Edit/Update Project |  |
 | Add DataFiles to projects |  |

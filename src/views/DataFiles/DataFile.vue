@@ -217,10 +217,7 @@ export default {
         });
       }
       this.data_manager_table_headers = _column_headers;
-      
       this.data_manager_table_rows = this.json_items;
-
-      console.log('rows',this.data_manager_table_rows);
     },
 
     onColumnUpdated(column_def) {
@@ -229,15 +226,19 @@ export default {
       for (let i = 0; i < this.column_definitions.length; i++) {
         if (column_def.old_column_name == this.column_definitions[i].name) {
           _column_definitions.push({
+            _id: column_def._id,
             name: column_def.name,
             data_type: column_def.data_type,
             default_value: column_def.default_value,
+            required: column_def.required,
           });
         } else {
           _column_definitions.push({
+            _id: this.column_definitions[i]._id,
             name: this.column_definitions[i].name,
             data_type: this.column_definitions[i].data_type,
             default_value: this.column_definitions[i].default_value,
+            required: this.column_definitions[i].required,
           });
         }
       }
@@ -301,7 +302,7 @@ export default {
       this.showEditColumnsDialog = false;
     },
     editRow(row) {
-      this.action = "edit";
+      this.action = "update";
       this.showRecordDialog = true;
       this.row_data = row;
     },
@@ -388,7 +389,9 @@ export default {
       }
       this.showAddColumnDialog = false;
     },
-
+    /**
+     * Insert of Update Data File record
+     */
     onRecordDialogClosed(_new_row) {
       if ("action" in _new_row) {
         if (_new_row.action == "edit") {
@@ -427,58 +430,13 @@ export default {
       }
       this.showRecordDialog = false;
     },
-    onRecordDialogClosed_old(response) {
-      if ("action" in response) {
-        if (response.action == "edit") {
-          const _rows = [];
-          for (let i = 0; i < this.rows.length; i++) {
-            if (this.rows[i]._id == response.row_id) {
-              const columns = [];
-
-              for (let i = 0; i < response.row_data.length; i++) {
-                columns.push({
-                  name: response.row_data[i].column,
-                  value: response.row_data[i].value,
-                });
-              }
-
-              _rows.push({
-                _id: response.row_id,
-                columns: columns,
-              });
-            } else {
-              _rows.push({
-                _id: this.rows[i]._id,
-                columns: this.rows[i].columns,
-              });
-            }
-          }
-          this.rows = _rows;
-        } else {
-          const columns = [];
-
-          for (let i = 0; i < response.row_data.length; i++) {
-            columns.push({
-              name: response.row_data[i].column,
-              value: response.row_data[i].value,
-            });
-          }
-
-          this.rows.push({
-            _id: uuidv4(),
-            columns: columns,
-          });
-        }
-      }
-      this.updateTableColumnsAndRows();
-      this.showRecordDialog = false;
-    },
+    
 
     onPressedShowDialogAddColumn() {
       this.showAddColumnDialog = true;
     },
     onPressedShowDialogAddRecord() {
-      this.action = "add";
+      this.action = "insert";
       this.showRecordDialog = true;
     },
     dbGetDataFile(id) {
