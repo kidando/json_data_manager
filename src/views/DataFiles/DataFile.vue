@@ -337,7 +337,7 @@ export default {
       };
 
       ipcRenderer.send("update_save_file", data_file);
-      ipcRenderer.once("update_save_file_response", (event, data) => {
+      ipcRenderer.on("update_save_file_response", (event, data) => {
         this.showSaveDialog = false;
       });
     },
@@ -424,7 +424,7 @@ export default {
     dbGetDataFile(id) {
       this.db_data_file = null;
       ipcRenderer.send("db_datafiles_get_where_id", id);
-      ipcRenderer.once("db_datafiles_get_where_id_response", (event, data) => {
+      ipcRenderer.on("db_datafiles_get_where_id_response", (event, data) => {
         // A fix for VUEjs coz it receiveds data as a reactive observable instead of data object
         this.db_data_file = JSON.parse(JSON.stringify(data));
 
@@ -478,7 +478,7 @@ export default {
       this.column_definitions = [];
       this.rows = [];
       ipcRenderer.send("load_data_file_where_path", path);
-      ipcRenderer.once("load_data_file_where_path_response", (event, data) => {
+      ipcRenderer.on("load_data_file_where_path_response", (event, data) => {
         const file = JSON.parse(data);
 
         this.column_definitions = file.items_data.column_definitions;

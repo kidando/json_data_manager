@@ -1,25 +1,28 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+const { ipcRenderer } = require("electron");
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+
   state: {
-    current_page: "/",
-    title:"Current Title"
+    preferences:null
   },
-  mutations: { // Sy
-    setCurrentPage(state,payload){
-      state.current_page = payload;
-    }
+  mutations: { 
+    updatePreferences(state, payload){
+      state.preferences = payload;
+  }
   },
   actions: {
-  },
-  modules: {
+    getAppPreferences(context){
+      ipcRenderer.send("get_system_prferences");
+      ipcRenderer.on("get_system_prferences_response", (event, data) => {
+          context.commit('updatePreferences',data);
+        });
+  }
   },
   getters:{
-    getCurrentPage(state){
-      return state.current_page;
-    }
+
   }
 })

@@ -1,13 +1,14 @@
 import Vue from 'vue'
 import VueRouter, { RouteConfig } from 'vue-router'
 
-// PROJECTS
-import Projects from '../views/Projects.vue'
 
 // DATA FILES
 import DataFileAdd from '../views/DataFiles/DataFileAdd.vue'
 import DataFiles from '../views/DataFiles/DataFiles.vue'
 import DataFile from '../views/DataFiles/DataFile.vue'
+
+// PROJECTS
+import Projects from '../views/Projects/Projects.vue'
 
 
 // SETTINGS
@@ -33,7 +34,18 @@ const routes: Array<RouteConfig> = [
     meta:{
       title:"Data File Details"
     }
-  }
+  },
+
+
+  // PROJECTS
+  {
+    path: '/projects',
+    name: 'Projects',
+    component: Projects,
+    meta:{
+      title:"Projects"
+    }
+  },
 ]
 
 const router = new VueRouter({

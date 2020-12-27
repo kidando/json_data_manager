@@ -7,8 +7,13 @@
         >
       </li>
       <li>
+        <a @click.prevent="pushToLink('/projects')" href=""
+          ><i class="fas fa-file-alt mr-2"></i> Projects</a
+        >
+      </li>
+      <li>
         <a @click.prevent="pushToLink('/')" href=""
-          ><i class="fas fa-file-alt mr-2"></i> All Data Files</a
+          ><i class="fas fa-file-alt mr-2"></i> Data Files</a
         >
       </li>
     </ul>
